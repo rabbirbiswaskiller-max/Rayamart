@@ -1,0 +1,8 @@
+.env
+.env.*
+!.env.example
+node_modules/
+.vercel/
+.grok/
+.node_modules.lock
+.git/

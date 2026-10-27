@@ -1,0 +1,36 @@
+{
+  "url": "http://127.0.0.1:8080",
+  "viewports": {
+    "desktop": {
+      "width": 1280,
+      "height": 800,
+      "status": 200,
+      "title": "Raya Mart — The import house",
+      "hasCanvas": false,
+      "bodyTextLen": 3866,
+      "bodyTextHash": "6333fa8e687c231da642c31670d6d4d2ccf6d1c2b72b36aa9cf58d14fc703c77",
+      "bodyTextPrefix": "Sealed at origin · Confirmed by phone before you pay · Complimen",
+      "horizontalOverflow": false,
+      "consoleErrors": [],
+      "pageErrors": [],
+      "screenshot": "/workspace/screenshots/raya-dev.png"
+    },
+    "mobile": {
+      "width": 390,
+      "height": 844,
+      "status": 200,
+      "title": "Raya Mart — The import house",
+      "hasCanvas": false,
+      "bodyTextLen": 3819,
+      "bodyTextHash": "78a9e9b283541847973539aeffc95df4ffea7bcc3efb41d47d2312c4a2cc6168",
+      "bodyTextPrefix": "Sealed at origin · Confirmed by phone before you pay · Complimen",
+      "horizontalOverflow": false,
+      "consoleErrors": [],
+      "pageErrors": [],
+      "screenshot": "/workspace/screenshots/raya-dev-mobile.png"
+    }
+  },
+  "brandWarnings": [],
+  "authWarnings": [],
+  "verdictFile": "/workspace/screenshots/raya-dev.json"
+}
