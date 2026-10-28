@@ -151,7 +151,7 @@ function ManageStore() {
               <>
                 {access.signedIn && (
                   <p style={{ color: "#a33", fontSize: 13 }}>
-                    এই Google অ্যাকাউন্টের Admin অনুমতি নেই। অনুমোদিত অ্যাকাউন্ট দিয়ে চেষ্টা করো।
+                    এই অ্যাকাউন্টের Admin অনুমতি নেই। অনুমোদিত ইমেইল ও পাসওয়ার্ড দিয়ে চেষ্টা করো।
                   </p>
                 )}
                 <form onSubmit={adminLogin} style={{ display: "grid", gap: 10 }}>
