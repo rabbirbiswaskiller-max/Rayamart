@@ -58,6 +58,12 @@ export function Shell({ children }: { children: ReactNode }) {
             <SearchForm className="w-full max-w-xs" />
           </div>
           <Link
+            to="/manage-store"
+            className="hidden h-10 items-center border border-line px-3 text-xs tracking-wide hover:border-ink sm:inline-flex"
+          >
+            Sign in
+          </Link>
+          <Link
             to="/bag"
             className="ml-auto inline-flex h-11 items-center gap-2 px-2 md:ml-3"
             aria-label="Open bag"
@@ -127,6 +133,9 @@ export function Shell({ children }: { children: ReactNode }) {
             </MobileLink>
             <MobileLink to="/bag" onClick={() => setOpen(false)}>
               Bag
+            </MobileLink>
+            <MobileLink to="/manage-store" onClick={() => setOpen(false)}>
+              Sign in
             </MobileLink>
           </nav>
         </div>
@@ -216,7 +225,7 @@ function MobileLink({
 }: {
   children: ReactNode;
   onClick: () => void;
-  to: "/" | "/shop" | "/house" | "/track" | "/bag";
+  to: "/" | "/shop" | "/house" | "/track" | "/bag" | "/manage-store";
   search?: ShopQuery;
 }) {
   if (to === "/shop") {
