@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, type FormEvent } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { authClient } from "@/lib/auth/client";
 
@@ -7,12 +7,12 @@ export const Route = createFileRoute("/account")({ component: CustomerAccount })
 type Mode = "login" | "register";
 
 function normalizeBangladeshPhone(value: string): string | null {
-  const digits = value.replace(/\\D/g, "");
+  const digits = value.replace(/\D/g, "");
   let normalized = digits;
   if (normalized.startsWith("00880")) normalized = normalized.slice(2);
   if (normalized.startsWith("880")) normalized = normalized.slice(3);
   if (normalized.startsWith("0")) normalized = normalized.slice(1);
-  if (!/^1[3-9]\\d{8}$/.test(normalized)) return null;
+  if (!/^1[3-9]\d{8}$/.test(normalized)) return null;
   return "880" + normalized;
 }
 
@@ -28,7 +28,7 @@ function CustomerAccount() {
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
 
-  async function submit(event: React.FormEvent<HTMLFormElement>) {
+  async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setMessage("");
     const normalized = normalizeBangladeshPhone(phone);
