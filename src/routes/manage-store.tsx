@@ -254,7 +254,7 @@ function ManageStore() {
               <span className="size-2 rounded-full bg-[#34845b]" /> Admin access verified
             </span>
             <button onClick={() => void refreshDashboard()} disabled={refreshing} className="inline-flex h-10 items-center gap-2 rounded-xl border border-[#ddd8cc] px-3 text-sm hover:bg-[#f0eee6] disabled:opacity-60" aria-label="Refresh dashboard">
-              <RefreshCw className={\`size-4 \${refreshing ? "animate-spin" : ""}\`} /><span className="hidden sm:inline">Refresh</span>
+              <RefreshCw className={`size-4 ${refreshing ? "animate-spin" : ""}`} /><span className="hidden sm:inline">Refresh</span>
             </button>
             <button onClick={() => void logout()} disabled={busy} className="inline-flex h-10 items-center gap-2 rounded-xl border border-[#ddd8cc] px-3 text-sm hover:bg-[#f0eee6] disabled:opacity-60">
               <LogOut className="size-4" /><span className="hidden sm:inline">Log out</span>
@@ -270,7 +270,7 @@ function ManageStore() {
                 const Icon = item.icon;
                 const active = section === item.id;
                 return (
-                  <button key={item.id} onClick={() => setSection(item.id)} className={\`flex min-h-11 items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm transition \${active ? "bg-[#1c3d34] font-semibold text-white shadow-sm" : "text-[#55574e] hover:bg-[#f0eee6]"}\`}>
+                  <button key={item.id} onClick={() => setSection(item.id)} className={`flex min-h-11 items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm transition ${active ? "bg-[#1c3d34] font-semibold text-white shadow-sm" : "text-[#55574e] hover:bg-[#f0eee6]"}`}>
                     <Icon className="size-4 shrink-0" /> <span>{item.label}</span>
                     {active && <ChevronRight className="ml-auto hidden size-4 lg:block" />}
                   </button>
@@ -326,7 +326,7 @@ function ManageStore() {
                       <div className="mt-5 space-y-4">
                         <StatusRow label="Admin email configured" detail="Server-side access rule" ok={access.emailConfigured} />
                         <StatusRow label="Admin session" detail="Signed in to this account" ok={access.allowed} />
-                        <StatusRow label="Catalogue loaded" detail={\`\${products.length} products in site code\`} ok={products.length > 0} />
+                        <StatusRow label="Catalogue loaded" detail={`${products.length} products in site code`} ok={products.length > 0} />
                         <StatusRow label="Order storage" detail="Browser-local demo storage" ok={false} />
                       </div>
                     </div>
@@ -338,8 +338,8 @@ function ManageStore() {
                 </div>
 
                 <div className="grid gap-3 sm:grid-cols-3">
-                  <QuickCard icon={ShoppingBag} title="Orders" value={\`\${orders.length} saved here\`} action="Review orders" onClick={() => setSection("orders")} />
-                  <QuickCard icon={Boxes} title="Ready in Dhaka" value={\`\${readyProducts} products\`} action="Browse catalogue" onClick={() => setSection("products")} />
+                  <QuickCard icon={ShoppingBag} title="Orders" value={`${orders.length} saved here`} action="Review orders" onClick={() => setSection("orders")} />
+                  <QuickCard icon={Boxes} title="Ready in Dhaka" value={`${readyProducts} products`} action="Browse catalogue" onClick={() => setSection("products")} />
                   <QuickCard icon={Store} title="Brand houses" value={String(houses.length)} action="Store details" onClick={() => setSection("store")} />
                 </div>
               </div>
@@ -452,7 +452,7 @@ function MiniMetric({ label, value }: { label: string; value: string }) {
 }
 
 function StatusRow({ label, detail, ok }: { label: string; detail: string; ok: boolean }) {
-  return <div className="flex items-start gap-3"><span className={\`mt-0.5 grid size-6 shrink-0 place-items-center rounded-full \${ok ? "bg-[#e2f0e5] text-[#2d754c]" : "bg-[#f7e9d9] text-[#98632c]"}\`}>{ok ? <BadgeCheck className="size-4" /> : <CircleHelp className="size-4" />}</span><div className="min-w-0 flex-1"><p className="text-sm font-medium">{label}</p><p className="mt-0.5 text-xs leading-5 text-[#898477]">{detail}</p></div><span className={\`text-[10px] font-bold uppercase tracking-wider \${ok ? "text-[#2d754c]" : "text-[#98632c]"}\`}>{ok ? "Ready" : "Note"}</span></div>;
+  return <div className="flex items-start gap-3"><span className={`mt-0.5 grid size-6 shrink-0 place-items-center rounded-full ${ok ? "bg-[#e2f0e5] text-[#2d754c]" : "bg-[#f7e9d9] text-[#98632c]"}`}>{ok ? <BadgeCheck className="size-4" /> : <CircleHelp className="size-4" />}</span><div className="min-w-0 flex-1"><p className="text-sm font-medium">{label}</p><p className="mt-0.5 text-xs leading-5 text-[#898477]">{detail}</p></div><span className={`text-[10px] font-bold uppercase tracking-wider ${ok ? "text-[#2d754c]" : "text-[#98632c]"}`}>{ok ? "Ready" : "Note"}</span></div>;
 }
 
 function QuickCard({ icon: Icon, title, value, action, onClick }: { icon: typeof Package; title: string; value: string; action: string; onClick: () => void }) {
@@ -462,7 +462,7 @@ function QuickCard({ icon: Icon, title, value, action, onClick }: { icon: typeof
 function ProductRow({ product }: { product: Product }) {
   const category = categories.find((c) => c.slug === product.category)?.name ?? product.category;
   const house = houses.find((h) => h.slug === product.house)?.name ?? product.house;
-  return <div className="flex items-center gap-3 py-3"><img src={product.image} alt="" className="size-14 shrink-0 rounded-xl bg-[#f0eee6] object-cover" /><div className="min-w-0 flex-1"><p className="truncate text-sm font-semibold">{product.name}</p><p className="mt-1 truncate text-xs text-[#898477]">{house} · {category}</p></div><div className="text-right"><p className="text-sm font-semibold">{taka(product.price)}</p><p className={\`mt-1 text-[10px] \${product.landed ? "text-[#2d754c]" : "text-[#98632c]"}\`}>{product.landed ? "Ready in Dhaka" : "Order from house"}</p></div></div>;
+  return <div className="flex items-center gap-3 py-3"><img src={product.image} alt="" className="size-14 shrink-0 rounded-xl bg-[#f0eee6] object-cover" /><div className="min-w-0 flex-1"><p className="truncate text-sm font-semibold">{product.name}</p><p className="mt-1 truncate text-xs text-[#898477]">{house} · {category}</p></div><div className="text-right"><p className="text-sm font-semibold">{taka(product.price)}</p><p className={`mt-1 text-[10px] ${product.landed ? "text-[#2d754c]" : "text-[#98632c]"}`}>{product.landed ? "Ready in Dhaka" : "Order from house"}</p></div></div>;
 }
 
 function ProductCard({ product }: { product: Product }) {
@@ -470,7 +470,7 @@ function ProductCard({ product }: { product: Product }) {
   const house = houses.find((h) => h.slug === product.house)?.name ?? product.house;
   const saving = product.compareAt && product.compareAt > product.price ? product.compareAt - product.price : 0;
   return <article className="overflow-hidden rounded-xl border border-[#e8e2d7] bg-white">
-    <div className="relative bg-[#f0eee6]"><img src={product.image} alt={product.alt} className="aspect-[4/3] w-full object-cover" /><span className={\`absolute left-3 top-3 rounded-full px-2.5 py-1 text-[10px] font-semibold \${product.landed ? "bg-[#e2f0e5] text-[#2d754c]" : "bg-[#f7e9d9] text-[#98632c]"}\`}>{product.landed ? "Ready in Dhaka" : "From house"}</span></div>
+    <div className="relative bg-[#f0eee6]"><img src={product.image} alt={product.alt} className="aspect-[4/3] w-full object-cover" /><span className={`absolute left-3 top-3 rounded-full px-2.5 py-1 text-[10px] font-semibold ${product.landed ? "bg-[#e2f0e5] text-[#2d754c]" : "bg-[#f7e9d9] text-[#98632c]"}`}>{product.landed ? "Ready in Dhaka" : "From house"}</span></div>
     <div className="p-4"><p className="text-[10px] uppercase tracking-[.16em] text-[#7c5e3a]">{house}</p><h3 className="mt-1 font-serif text-xl leading-tight">{product.name}</h3><p className="mt-1 text-xs text-[#898477]">{category} · {product.origin} · {product.size}</p><div className="mt-3 flex items-baseline gap-2"><span className="text-sm font-bold">{taka(product.price)}</span>{saving > 0 && <span className="text-xs text-[#898477] line-through">{taka(product.compareAt!)}</span>}</div><p className="mt-2 text-xs leading-5 text-[#777268]">{product.blurb}</p><div className="mt-3 flex flex-wrap gap-1.5">{product.notes.slice(0, 3).map((note) => <span key={note} className="rounded-full bg-[#f0eee6] px-2 py-1 text-[10px] text-[#625e54]">{note}</span>)}</div></div>
   </article>;
 }
