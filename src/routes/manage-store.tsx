@@ -228,9 +228,14 @@ function ManageStore() {
               <ShieldCheck className="mt-0.5 size-4 shrink-0 text-[#1c3d34]" />
               Admin access is checked on the server. Customer accounts cannot open the dashboard.
             </div>
-            <Link to="/" className="mt-6 inline-flex items-center gap-2 text-sm text-[#625e54] underline underline-offset-4">
-              Back to Raya Mart <ExternalLink className="size-3.5" />
-            </Link>
+            <div className="mt-6 flex flex-wrap items-center justify-between gap-3">
+              <Link to="/" className="inline-flex items-center gap-2 text-sm text-[#625e54] underline underline-offset-4">
+                Back to Raya Mart <ExternalLink className="size-3.5" />
+              </Link>
+              <Link to="/admin-setup" className="text-sm font-semibold text-[#1c3d34] underline underline-offset-4">
+                First-time admin setup
+              </Link>
+            </div>
           </div>
         </div>
       </main>
