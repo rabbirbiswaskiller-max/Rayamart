@@ -156,13 +156,13 @@ function ManageStore() {
                 )}
                 <form onSubmit={adminLogin} style={{ display: "grid", gap: 10 }}>
                   <label style={{ display: "grid", gap: 6, fontSize: 13, color: "#43584d" }}>
-                    Admin Email
+                    Admin Number
                     <input
-                      type="email"
+                      type="text"
                       value={adminEmail}
                       onChange={(event) => setAdminEmail(event.target.value)}
                       autoComplete="username"
-                      placeholder="তোমার Gmail address লিখো"
+                      placeholder="Admin number লিখো"
                       required
                       style={{ boxSizing: "border-box", width: "100%", padding: "12px 13px", border: "1px solid #d9e3dc", borderRadius: 9, fontSize: 14 }}
                     />
