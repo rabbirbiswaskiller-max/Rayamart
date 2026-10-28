@@ -2,16 +2,12 @@ import { useEffect, useMemo, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import {
   Activity,
-  ArrowDownRight,
-  ArrowUpRight,
   BadgeCheck,
   Boxes,
-  ChartNoAxesCombined,
   ChevronRight,
   CircleHelp,
   ClipboardList,
   ExternalLink,
-  Eye,
   LayoutDashboard,
   LogOut,
   Package,
@@ -21,8 +17,6 @@ import {
   ShoppingBag,
   Store,
   Tags,
-  Truck,
-  Users,
   Wallet,
 } from "lucide-react";
 import { getAdminAccess } from "@/lib/admin/access";
@@ -67,7 +61,6 @@ function ManageStore() {
   const [orderSearch, setOrderSearch] = useState("");
   const [refreshing, setRefreshing] = useState(false);
   const orders = useCart((s) => s.orders);
-  const cartItems = useCart((s) => s.items);
 
   async function checkAccess() {
     try {
@@ -155,7 +148,7 @@ function ManageStore() {
   const averageOrder = orders.length ? Math.round(grossSales / orders.length) : 0;
   const readyProducts = products.filter((p) => p.landed).length;
 
-  if (!access) {
+  if (!access || !access.allowed) {
     return (
       <main className="min-h-[80vh] bg-[#f4f1e9] px-4 py-10 text-[#182f28] sm:px-6 sm:py-16">
         <div className="mx-auto grid max-w-5xl overflow-hidden rounded-3xl border border-[#ddd8cc] bg-[#fbfaf6] shadow-[0_24px_70px_rgba(28,61,52,.09)] md:grid-cols-[.95fr_1.05fr]">
@@ -244,21 +237,6 @@ function ManageStore() {
     );
   }
 
-  if (!access.allowed) {
-    return (
-      <main className="min-h-[60vh] bg-[#f4f1e9] px-4 py-12">
-        <section className="mx-auto max-w-xl rounded-2xl border border-[#ddd8cc] bg-white p-6 sm:p-8">
-          <ShieldCheck className="size-9 text-[#1c3d34]" />
-          <h1 className="mt-4 font-serif text-3xl">Checking administrator access</h1>
-          <p className="mt-3 text-sm leading-6 text-[#625e54]">
-            {error || "তোমার অ্যাকাউন্টের অনুমতি যাচাই করা হচ্ছে।"}
-          </p>
-          <button onClick={() => void refreshDashboard()} className="mt-5 rounded-xl bg-[#1c3d34] px-5 py-3 text-sm font-semibold text-white">আবার যাচাই করো</button>
-          {error && <p role="alert" className="mt-4 text-sm text-red-700">{error}</p>}
-        </section>
-      </main>
-    );
-  }
 
   return (
     <main className="min-h-screen bg-[#f4f1e9] text-[#182f28]">
