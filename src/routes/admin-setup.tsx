@@ -1,7 +1,45 @@
 import { useEffect, useState, type FormEvent } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { createServerFn } from "@tanstack/react-start";
+import { hashPassword } from "better-auth/crypto";
+import { getSql } from "@/lib/db";
 import { KeyRound, ShieldCheck, ArrowLeft, LoaderCircle } from "lucide-react";
+
+const setAdminPassword = createServerFn({ method: "POST" })
+  .inputValidator((data: { email: string; password: string; token: string }) => data)
+  .handler(async ({ data }) => {
+    const expectedToken = process.env.RAYA_ADMIN_SETUP_TOKEN?.trim();
+    const expectedEmail = process.env.RAYA_ADMIN_EMAIL?.trim().toLowerCase();
+    const email = data.email.trim().toLowerCase();
+    if (!expectedToken || data.token !== expectedToken || !expectedEmail || email !== expectedEmail) {
+      throw new Error("Setup code বা Admin Email সঠিক নয়।");
+    }
+    if (data.password.length < 12 || data.password.length > 128) {
+      throw new Error("পাসওয়ার্ড ১২ থেকে ১২৮ অক্ষরের মধ্যে হতে হবে।");
+    }
+    const sql = await getSql();
+    const users = await sql.query<{ id: string }>(
+      'SELECT id FROM "user" WHERE lower(email) = $1 LIMIT 1',
+      [email],
+    );
+    const user = users[0];
+    if (!user) throw new Error("Admin account পাওয়া যায়নি। Setup আবার যাচাই করতে হবে।");
+    const hashed = await hashPassword(data.password);
+    const accounts = await sql.query<{ id: string }>(
+      'SELECT id FROM "account" WHERE "userId" = $1 AND "providerId" = $2 LIMIT 1',
+      [user.id, "credential"],
+    );
+    if (!accounts[0]) throw new Error("Password login account পাওয়া যায়নি।");
+    await sql.query(
+      'UPDATE "account" SET password = $1, "updatedAt" = CURRENT_TIMESTAMP WHERE id = $2',
+      [hashed, accounts[0].id],
+    );
+    await sql.query(
+      'UPDATE "user" SET name = $1, "updatedAt" = CURRENT_TIMESTAMP WHERE id = $2',
+      ["Rabbir Biswas", user.id],
+    );
+    return { success: true };
+  });
 
 export const Route = createFileRoute("/admin-setup")({
   head: () => ({ meta: [{ title: "Secure Admin Setup — Raya Mart" }] }),
@@ -58,27 +96,13 @@ function AdminSetupPage() {
 
     setBusy(true);
     try {
-      const response = await fetch("/api/auth/sign-up/email", {
-        method: "POST",
-        headers: {
-          "content-type": "application/json",
-          "x-raya-admin-setup-token": setupToken,
-        },
-        body: JSON.stringify({
-          name: name.trim(),
+      await setAdminPassword({
+        data: {
           email: email.trim().toLowerCase(),
           password,
-          callbackURL: "/manage-store",
-        }),
+          token: setupToken,
+        },
       });
-      const result = await response.json().catch(() => ({}));
-      if (!response.ok) {
-        throw new Error(
-          typeof result.message === "string"
-            ? result.message
-            : "Admin account তৈরি হয়নি। Token ও email পরীক্ষা করো।",
-        );
-      }
       setPassword("");
       setConfirmPassword("");
       setSetupToken("");
