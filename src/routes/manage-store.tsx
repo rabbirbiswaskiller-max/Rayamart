@@ -190,9 +190,9 @@ function ManageStore() {
 
             <form onSubmit={adminLogin} className="mt-7 grid gap-4">
               <label className="grid gap-2 text-sm font-medium text-[#373d35]">
-                Admin Email
+                Admin Number
                 <input
-                  type="email"
+                  type="text"
                   inputMode="email"
                   autoCapitalize="none"
                   autoCorrect="off"
@@ -200,7 +200,7 @@ function ManageStore() {
                   value={adminEmail}
                   onChange={(event) => setAdminEmail(event.target.value)}
                   autoComplete="username"
-                  placeholder="তোমার অনুমোদিত অ্যাডমিন ইমেইল"
+                  placeholder="তোমার admin login ID"
                   required
                   className="h-12 w-full rounded-xl border border-[#d9d4c8] bg-white px-4 text-sm outline-none transition focus:border-[#1c3d34] focus:ring-2 focus:ring-[#1c3d34]/10"
                 />
