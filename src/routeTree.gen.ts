@@ -13,6 +13,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as BagRouteImport } from './routes/bag'
 import { Route as CheckoutRouteImport } from './routes/checkout'
 import { Route as HouseRouteImport } from './routes/house'
+import { Route as ManageStoreRouteImport } from './routes/manage-store'
 import { Route as ShopRouteImport } from './routes/shop'
 import { Route as TrackRouteImport } from './routes/track'
 import { Route as OrderIdRouteImport } from './routes/order.$id'
@@ -36,6 +37,11 @@ const CheckoutRoute = CheckoutRouteImport.update({
 const HouseRoute = HouseRouteImport.update({
   id: '/house',
   path: '/house',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ManageStoreRoute = ManageStoreRouteImport.update({
+  id: '/manage-store',
+  path: '/manage-store',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ShopRoute = ShopRouteImport.update({
@@ -64,6 +70,7 @@ export interface FileRoutesByFullPath {
   '/bag': typeof BagRoute
   '/checkout': typeof CheckoutRoute
   '/house': typeof HouseRoute
+  '/manage-store': typeof ManageStoreRoute
   '/shop': typeof ShopRoute
   '/track': typeof TrackRoute
   '/order/$id': typeof OrderIdRoute
@@ -74,6 +81,7 @@ export interface FileRoutesByTo {
   '/bag': typeof BagRoute
   '/checkout': typeof CheckoutRoute
   '/house': typeof HouseRoute
+  '/manage-store': typeof ManageStoreRoute
   '/shop': typeof ShopRoute
   '/track': typeof TrackRoute
   '/order/$id': typeof OrderIdRoute
@@ -85,6 +93,7 @@ export interface FileRoutesById {
   '/bag': typeof BagRoute
   '/checkout': typeof CheckoutRoute
   '/house': typeof HouseRoute
+  '/manage-store': typeof ManageStoreRoute
   '/shop': typeof ShopRoute
   '/track': typeof TrackRoute
   '/order/$id': typeof OrderIdRoute
@@ -97,6 +106,7 @@ export interface FileRouteTypes {
     | '/bag'
     | '/checkout'
     | '/house'
+    | '/manage-store'
     | '/shop'
     | '/track'
     | '/order/$id'
@@ -107,6 +117,7 @@ export interface FileRouteTypes {
     | '/bag'
     | '/checkout'
     | '/house'
+    | '/manage-store'
     | '/shop'
     | '/track'
     | '/order/$id'
@@ -117,6 +128,7 @@ export interface FileRouteTypes {
     | '/bag'
     | '/checkout'
     | '/house'
+    | '/manage-store'
     | '/shop'
     | '/track'
     | '/order/$id'
@@ -128,6 +140,7 @@ export interface RootRouteChildren {
   BagRoute: typeof BagRoute
   CheckoutRoute: typeof CheckoutRoute
   HouseRoute: typeof HouseRoute
+  ManageStoreRoute: typeof ManageStoreRoute
   ShopRoute: typeof ShopRoute
   TrackRoute: typeof TrackRoute
   OrderIdRoute: typeof OrderIdRoute
@@ -162,6 +175,13 @@ declare module '@tanstack/react-router' {
       path: '/house'
       fullPath: '/house'
       preLoaderRoute: typeof HouseRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/manage-store': {
+      id: '/manage-store'
+      path: '/manage-store'
+      fullPath: '/manage-store'
+      preLoaderRoute: typeof ManageStoreRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/shop': {
@@ -200,6 +220,7 @@ const rootRouteChildren: RootRouteChildren = {
   BagRoute: BagRoute,
   CheckoutRoute: CheckoutRoute,
   HouseRoute: HouseRoute,
+  ManageStoreRoute: ManageStoreRoute,
   ShopRoute: ShopRoute,
   TrackRoute: TrackRoute,
   OrderIdRoute: OrderIdRoute,
