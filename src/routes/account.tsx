@@ -67,17 +67,6 @@ function CustomerAccount() {
     }
   }
 
-  async function googleLogin() {
-    setMessage("");
-    setBusy(true);
-    try {
-      const { signIn } = await import("@/lib/auth/client");
-      await signIn("grok-google", { callbackURL: "/account", errorCallbackURL: "/account" });
-    } catch (error) {
-      setMessage(error instanceof Error ? error.message : "Google Login শুরু করা যায়নি।");
-      setBusy(false);
-    }
-  }
 
   const field = "w-full border border-line bg-white px-4 py-3 text-sm outline-none focus:border-pine";
   const primary = "w-full bg-pine px-4 py-3 text-sm text-white disabled:opacity-50";
@@ -112,8 +101,6 @@ function CustomerAccount() {
           <button className={primary} type="submit" disabled={busy}>{busy ? "অপেক্ষা করো…" : mode === "login" ? "Login" : "Create account"}</button>
         </form>
 
-        <div className="my-5 flex items-center gap-3 text-xs text-mute"><span className="h-px flex-1 bg-line" />অথবা<span className="h-px flex-1 bg-line" /></div>
-        <button type="button" className="w-full border border-line px-4 py-3 text-sm disabled:opacity-50" onClick={googleLogin} disabled={busy}>Continue with Google</button>
 
         {message && <p role="alert" className="mt-4 text-sm text-red-700">{message}</p>}
         <p className="mt-5 text-xs leading-5 text-mute">
