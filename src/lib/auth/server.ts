@@ -30,6 +30,7 @@
  * a verified id via `@/lib/auth/middleware`.
  */
 import { betterAuth } from "better-auth";
+import { APIError, createAuthMiddleware } from "better-auth/api";
 import { bearer, genericOAuth } from "better-auth/plugins";
 import { tanstackStartCookies } from "better-auth/tanstack-start";
 import { getCookie } from "@tanstack/react-start/server";
@@ -183,6 +184,25 @@ export const auth = betterAuth({
   // See `trustedOrigins` construction above — must cover live preview hosts AND
   // local loopback variants, or clients get "Invalid origin".
   trustedOrigins,
+
+  // Admin email cannot be claimed through public sign-up. The private setup
+  // page must present the temporary server-side setup token.
+  hooks: {
+    before: createAuthMiddleware(async (ctx) => {
+      if (ctx.path !== "/sign-up/email") return;
+      const email =
+        typeof ctx.body?.email === "string" ? ctx.body.email.trim().toLowerCase() : "";
+      const adminEmail = env("RAYA_ADMIN_EMAIL")?.toLowerCase();
+      if (email && adminEmail && email === adminEmail) {
+        const setupToken = env("RAYA_ADMIN_SETUP_TOKEN");
+        if (!setupToken || ctx.headers.get("x-raya-admin-setup-token") !== setupToken) {
+          throw new APIError("FORBIDDEN", {
+            message: "Admin account registration is restricted. Use the secure setup page.",
+          });
+        }
+      }
+    }),
+  },
 
   // Encrypt broker-issued OAuth tokens at rest, and treat the broker's upstreams
   // as trusted first-party identities. The broker owns identity and X emails are
