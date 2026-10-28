@@ -82,7 +82,7 @@ function ManageStore() {
     try {
       const { authClient } = await import("@/lib/auth/client");
       const result = await authClient.signIn.email({
-        email: adminEmail.trim(),
+        email: adminEmail.trim().toLowerCase(),
         password: adminPassword,
       });
       if (result.error) {
@@ -190,13 +190,17 @@ function ManageStore() {
 
             <form onSubmit={adminLogin} className="mt-7 grid gap-4">
               <label className="grid gap-2 text-sm font-medium text-[#373d35]">
-                Admin Number
+                Admin Email
                 <input
-                  type="text"
+                  type="email"
+                  inputMode="email"
+                  autoCapitalize="none"
+                  autoCorrect="off"
+                  spellCheck={false}
                   value={adminEmail}
                   onChange={(event) => setAdminEmail(event.target.value)}
                   autoComplete="username"
-                  placeholder="তোমার admin login ID"
+                  placeholder="তোমার অনুমোদিত অ্যাডমিন ইমেইল"
                   required
                   className="h-12 w-full rounded-xl border border-[#d9d4c8] bg-white px-4 text-sm outline-none transition focus:border-[#1c3d34] focus:ring-2 focus:ring-[#1c3d34]/10"
                 />
