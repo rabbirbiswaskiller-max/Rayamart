@@ -28,14 +28,14 @@ const empty: Draft = {
 
 function CheckoutPage() {
   const { lines, subtotal } = useCartDetailed();
-  const isCOD = draft.pay === "cod";
-  const discountAmount = isCOD ? 0 : onlineDiscountFor(subtotal);
-  const shippingAmount = isCOD ? SHIP_FEE : 0;
-  const totalAmount = subtotal - discountAmount + shippingAmount;
   const placeOrder = useCart((s) => s.placeOrder);
   const navigate = useNavigate();
   const [draft, setDraft] = useState<Draft>(empty);
   const [errors, setErrors] = useState<Partial<Record<keyof Draft, string>>>({});
+  const isCOD = draft.pay === "cod";
+  const discountAmount = isCOD ? 0 : onlineDiscountFor(subtotal);
+  const shippingAmount = isCOD ? SHIP_FEE : 0;
+  const totalAmount = subtotal - discountAmount + shippingAmount;
 
   if (lines.length === 0) {
     return (
