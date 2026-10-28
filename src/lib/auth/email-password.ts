@@ -1,10 +1,9 @@
 /**
- * Local email/password sign-in (this app's Better Auth DB — not the broker).
+ * Local password sign-in using the app's Better Auth database.
  *
- * Off by default. To enable: set `emailAndPasswordEnabled` to `true` below,
- * then build sign-up / sign-in forms with `authClient.signUp.email` /
- * `authClient.signIn.email` from `@/lib/auth/client` (see the auth skill).
- *
- * Do NOT edit `server.ts` for this — that file is frozen pre-wired config.
+ * Customer UI maps a normalized Bangladesh mobile number to a private,
+ * deterministic internal email alias, so customers can use phone + password
+ * without an SMS provider. Because there is no OTP, ownership of a number is
+ * NOT verified and password recovery by phone is not available.
  */
-export const emailAndPasswordEnabled = false;
+export const emailAndPasswordEnabled = true;
