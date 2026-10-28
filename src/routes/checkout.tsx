@@ -1,6 +1,6 @@
 import { useState, type FormEvent } from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { cities, payMethods, taka, type PayMethod } from "@/lib/catalog";
+import { cities, payMethods, taka, onlineDiscountFor, SHIP_FEE, type PayMethod } from "@/lib/catalog";
 import { useCart, useCartDetailed } from "@/lib/store";
 
 export const Route = createFileRoute("/checkout")({
@@ -27,7 +27,11 @@ const empty: Draft = {
 };
 
 function CheckoutPage() {
-  const { lines, subtotal, shipping, total } = useCartDetailed();
+  const { lines, subtotal } = useCartDetailed();
+  const isCOD = draft.pay === "cod";
+  const discountAmount = isCOD ? 0 : onlineDiscountFor(subtotal);
+  const shippingAmount = isCOD ? SHIP_FEE : 0;
+  const totalAmount = subtotal - discountAmount + shippingAmount;
   const placeOrder = useCart((s) => s.placeOrder);
   const navigate = useNavigate();
   const [draft, setDraft] = useState<Draft>(empty);
@@ -160,8 +164,10 @@ function CheckoutPage() {
         </ul>
         <dl className="mt-4 space-y-2 border-t border-line pt-4 text-sm">
           <div className="flex justify-between"><dt className="text-mute">Pieces</dt><dd className="tabular-nums">{taka(subtotal)}</dd></div>
-          <div className="flex justify-between"><dt className="text-mute">Delivery</dt><dd>{shipping === 0 ? "Complimentary" : taka(shipping)}</dd></div>
-          <div className="flex justify-between text-base"><dt>Total</dt><dd className="tabular-nums">{taka(total)}</dd></div>
+          {discountAmount > 0 ? <div className="flex justify-between"><dt className="text-mute">Online discount (3%)</dt><dd>-{taka(discountAmount)}</dd></div> : null}
+          <div className="flex justify-between"><dt className="text-mute">Delivery</dt><dd>{shippingAmount === 0 ? "Complimentary" : taka(shippingAmount)}</dd></div>
+          <div className="flex justify-between text-base"><dt>Total</dt><dd className="tabular-nums">{taka(totalAmount)}</dd></div>
+          {isCOD ? <div className="border-t border-line pt-3 text-sm"><p>Advance delivery fee: <strong>{taka(SHIP_FEE)}</strong></p><p className="mt-1">Pay for products on delivery: <strong>{taka(subtotal)}</strong></p></div> : null}
         </dl>
       </aside>
     </div>

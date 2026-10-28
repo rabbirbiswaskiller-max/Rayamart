@@ -3,6 +3,8 @@ import { persist } from "zustand/middleware";
 import {
   getProduct,
   shippingFor,
+  onlineDiscountFor,
+  SHIP_FEE,
   type PayMethod,
 } from "@/lib/catalog";
 
@@ -13,8 +15,11 @@ export type OrderRecord = {
   createdAt: string;
   lines: { slug: string; name: string; qty: number; price: number; image: string }[];
   subtotal: number;
+  discount?: number;
   shipping: number;
   total: number;
+  advanceDue?: number;
+  dueOnDelivery?: number;
   customer: {
     name: string;
     phone: string;
@@ -83,15 +88,22 @@ export const useCart = create<CartState>()(
           .filter((line): line is OrderRecord["lines"][number] => line !== null);
         if (lines.length === 0) return null;
         const subtotal = lines.reduce((sum, line) => sum + line.price * line.qty, 0);
-        const shipping = shippingFor(subtotal);
+        const isCOD = customer.pay === "cod";
+        const discount = isCOD ? 0 : onlineDiscountFor(subtotal);
+        const shipping = isCOD ? SHIP_FEE : 0;
+        const advanceDue = isCOD ? shipping : 0;
+        const dueOnDelivery = isCOD ? subtotal : 0;
         const id = `RM-${Date.now().toString(36).toUpperCase()}`;
         const order: OrderRecord = {
           id,
           createdAt: new Date().toISOString(),
           lines,
           subtotal,
+          discount,
           shipping,
-          total: subtotal + shipping,
+          total: subtotal - discount + shipping,
+          advanceDue,
+          dueOnDelivery,
           customer,
         };
         set((state) => ({ orders: [order, ...state.orders], items: [] }));

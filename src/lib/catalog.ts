@@ -1,6 +1,14 @@
 export const FREE_OVER = 3500;
 export const SHIP_FEE = 120;
 
+export const ONLINE_DISCOUNT_OVER = 3000;
+export const ONLINE_DISCOUNT_RATE = 0.03;
+
+export function onlineDiscountFor(subtotal: number) {
+  if (subtotal < ONLINE_DISCOUNT_OVER) return 0;
+  return Math.round(subtotal * ONLINE_DISCOUNT_RATE);
+}
+
 export function taka(n: number) {
   return `৳${new Intl.NumberFormat("en-US").format(n)}`;
 }
