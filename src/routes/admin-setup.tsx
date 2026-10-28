@@ -22,8 +22,28 @@ const setAdminPassword = createServerFn({ method: "POST" })
       'SELECT id FROM "user" WHERE lower(email) = $1 LIMIT 1',
       [email],
     );
-    const user = users[0];
-    if (!user) throw new Error("Admin account পাওয়া যায়নি। Setup আবার যাচাই করতে হবে।");
+    let user = users[0];
+    if (!user) {
+      // Create the missing account through Better Auth's supported sign-up API.
+      // The server-side hook validates the one-time setup token before allowing
+      // this specific admin email to register.
+      const { auth } = await import("@/lib/auth/server");
+      const origin = process.env.BETTER_AUTH_URL?.trim() || "https://rayamart.vercel.app";
+      await auth.api.signUpEmail({
+        body: { name: "Rabbir Biswas", email, password: data.password },
+        headers: new Headers({
+          "x-raya-admin-setup-token": data.token,
+          origin,
+        }),
+      });
+      const createdUsers = await sql.query<{ id: string }>(
+        'SELECT id FROM "user" WHERE lower(email) = $1 LIMIT 1',
+        [email],
+      );
+      user = createdUsers[0];
+      if (!user) throw new Error("Admin account তৈরি হয়েছে কি না যাচাই করা যায়নি।");
+      return { success: true };
+    }
     const hashed = await hashPassword(data.password);
     const accounts = await sql.query<{ id: string }>(
       'SELECT id FROM "account" WHERE "userId" = $1 AND "providerId" = $2 LIMIT 1',
