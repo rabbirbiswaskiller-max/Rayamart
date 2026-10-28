@@ -16,7 +16,7 @@ function ManageStore() {
   const [access, setAccess] = useState<Access | null>(null);
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
-  const [adminEmail, setAdminEmail] = useState("rabbirbiswasraya@gmail.com");
+  const [adminEmail, setAdminEmail] = useState("");
   const [adminPassword, setAdminPassword] = useState("");
 
   async function checkAccess() {
@@ -162,6 +162,7 @@ function ManageStore() {
                       value={adminEmail}
                       onChange={(event) => setAdminEmail(event.target.value)}
                       autoComplete="username"
+                      placeholder="তোমার Gmail address লিখো"
                       required
                       style={{ boxSizing: "border-box", width: "100%", padding: "12px 13px", border: "1px solid #d9e3dc", borderRadius: 9, fontSize: 14 }}
                     />
