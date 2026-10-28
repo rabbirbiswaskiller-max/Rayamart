@@ -16,6 +16,8 @@ function ManageStore() {
   const [access, setAccess] = useState<Access | null>(null);
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
+  const [adminEmail, setAdminEmail] = useState("rabbirbiswasraya@gmail.com");
+  const [adminPassword, setAdminPassword] = useState("");
 
   async function checkAccess() {
     try {
@@ -30,21 +32,28 @@ function ManageStore() {
     void checkAccess();
   }, []);
 
-  async function googleLogin() {
+  async function adminLogin(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
     setError("");
     setBusy(true);
     try {
-      const { signIn } = await import("@/lib/auth/client");
-      await signIn("grok-google", {
-        callbackURL: "/manage-store",
-        errorCallbackURL: "/manage-store",
+      const { authClient } = await import("@/lib/auth/client");
+      const result = await authClient.signIn.email({
+        email: adminEmail.trim(),
+        password: adminPassword,
       });
+      if (result.error) {
+        throw new Error(result.error.message || "ইমেইল বা পাসওয়ার্ড সঠিক নয়।");
+      }
+      setAdminPassword("");
+      await checkAccess();
     } catch (err) {
       setError(
         err instanceof Error
           ? err.message
-          : "Google Login চালু করা যায়নি। Google OAuth configuration পরীক্ষা করতে হবে।",
+          : "Admin Login করা যায়নি। ইমেইল ও পাসওয়ার্ড পরীক্ষা করো।",
       );
+    } finally {
       setBusy(false);
     }
   }
@@ -145,9 +154,33 @@ function ManageStore() {
                     এই Google অ্যাকাউন্টের Admin অনুমতি নেই। অনুমোদিত অ্যাকাউন্ট দিয়ে চেষ্টা করো।
                   </p>
                 )}
-                <button type="button" onClick={googleLogin} disabled={busy} style={{ ...button, opacity: busy ? 0.65 : 1 }}>
-                  {busy ? "সংযোগ হচ্ছে…" : "Continue with Google"}
-                </button>
+                <form onSubmit={adminLogin} style={{ display: "grid", gap: 10 }}>
+                  <label style={{ display: "grid", gap: 6, fontSize: 13, color: "#43584d" }}>
+                    Admin Email
+                    <input
+                      type="email"
+                      value={adminEmail}
+                      onChange={(event) => setAdminEmail(event.target.value)}
+                      autoComplete="username"
+                      required
+                      style={{ boxSizing: "border-box", width: "100%", padding: "12px 13px", border: "1px solid #d9e3dc", borderRadius: 9, fontSize: 14 }}
+                    />
+                  </label>
+                  <label style={{ display: "grid", gap: 6, fontSize: 13, color: "#43584d" }}>
+                    Admin Password
+                    <input
+                      type="password"
+                      value={adminPassword}
+                      onChange={(event) => setAdminPassword(event.target.value)}
+                      autoComplete="current-password"
+                      required
+                      style={{ boxSizing: "border-box", width: "100%", padding: "12px 13px", border: "1px solid #d9e3dc", borderRadius: 9, fontSize: 14 }}
+                    />
+                  </label>
+                  <button type="submit" disabled={busy} style={{ ...button, background: "#173c31", color: "#fff", borderColor: "#173c31", opacity: busy ? 0.65 : 1 }}>
+                    {busy ? "লগইন হচ্ছে…" : "Admin Login"}
+                  </button>
+                </form>
               </>
             )}
 
