@@ -1,14 +1,17 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { BadgeCheck, RotateCcw, ShieldCheck, Truck } from "lucide-react";
-import { categories, houses, products } from "@/lib/catalog";
+import { categories, houses } from "@/lib/catalog";
+import { listStoreProducts } from "@/lib/admin/products";
 import { DealClock } from "@/components/commerce";
 import { ProductCard } from "@/components/product-card";
 
 export const Route = createFileRoute("/")({
+  loader: () => listStoreProducts(),
   component: Home,
 });
 
 function Home() {
+  const products = Route.useLoaderData();
   const flash = products.filter((p) => p.flash);
   const edit = products.filter((p) => p.category !== "sets").slice(0, 8);
 
