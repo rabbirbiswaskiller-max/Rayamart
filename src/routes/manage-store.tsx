@@ -328,7 +328,7 @@ function ManageStore() {
                   {section === "overview" ? "Good to see you." : section === "products" ? "Your catalogue." : section === "orders" ? "Order desk." : "Store details."}
                 </h1>
                 <p className="mt-2 text-sm leading-6 text-[#6c6a60]">
-                  {section === "overview" ? "A clear view of your shop and the information currently available." : section === "products" ? "Add, edit or delete products saved in the product database." : section === "orders" ? "Review orders saved in this browser and their customer details." : "A quick reference for your store configuration and readiness."}
+                  {section === "overview" ? "A clear view of your shop and the information currently available." : section === "products" ? "Add, edit or delete products saved in the product database." : section === "orders" ? "Review customer orders saved in the shared server database." : "A quick reference for your store configuration and readiness."}
                 </p>
               </div>
               <Link to="/" className="inline-flex h-10 items-center gap-2 rounded-xl border border-[#ddd8cc] bg-[#fbfaf6] px-3 text-sm hover:bg-white">View storefront <ExternalLink className="size-3.5" /></Link>
@@ -339,8 +339,8 @@ function ManageStore() {
                 <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
                   <Metric icon={Package} label="Catalogue products" value={String(managedProducts.length)} note="Saved in product database" />
                   <Metric icon={Tags} label="Categories" value={String(categories.length)} note="Shop categories" />
-                  <Metric icon={ClipboardList} label="Local orders" value={String(managedOrders.length)} note="Saved in server database" />
-                  <Metric icon={Wallet} label="Local order value" value={taka(grossSales)} note="Based on saved orders" />
+                  <Metric icon={ClipboardList} label="Customer orders" value={String(managedOrders.length)} note="Saved in server database" />
+                  <Metric icon={Wallet} label="Saved order value" value={taka(grossSales)} note="Based on saved orders" />
                 </div>
 
                 <div className="grid gap-5 xl:grid-cols-[1.2fr_.8fr]">
@@ -364,12 +364,12 @@ function ManageStore() {
                         <StatusRow label="Admin email configured" detail="Server-side access rule" ok={access.emailConfigured} />
                         <StatusRow label="Admin session" detail="Signed in to this account" ok={access.allowed} />
                         <StatusRow label="Catalogue loaded" detail={`${managedProducts.length} products in database`} ok={managedProducts.length > 0} />
-                        <StatusRow label="Order storage" detail="Server database" ok={false} />
+                        <StatusRow label="Order storage" detail="Shared server database" ok={true} />
                       </div>
                     </div>
                     <div className="rounded-2xl border border-[#dfd4bf] bg-[#f0e9dc] p-4 sm:p-6">
                       <div className="flex items-center gap-2"><CircleHelp className="size-5 text-[#7c5e3a]" /><h2 className="font-serif text-xl">Important note</h2></div>
-                      <p className="mt-3 text-sm leading-6 text-[#655d50]">এখনকার checkout অর্ডার একই ব্রাউজারের local storage-এ রাখে। অন্য কাস্টমারের ফোন থেকে আসা অর্ডার এখানে স্বয়ংক্রিয়ভাবে আসবে না। সবার অর্ডার এক জায়গায় দেখতে হলে server database-এ order system যুক্ত করতে হবে।</p>
+                      <p className="mt-3 text-sm leading-6 text-[#655d50]">এখন কাস্টমারের অর্ডার server database-এ সেভ হবে। তাই অ্যাডমিন হিসেবে অন্য ফোন থেকে লগইন করলেও অর্ডারগুলো এখানে দেখা যাবে।</p>
                     </div>
                   </div>
                 </div>
@@ -466,7 +466,7 @@ function ManageStore() {
                 {filteredOrders.length === 0 ? (
                   <div className="mt-5 rounded-xl border border-dashed border-[#d8d1c4] px-4 py-12 text-center">
                     <ClipboardList className="mx-auto size-8 text-[#8a8478]" />
-                    <h3 className="mt-3 font-serif text-xl">No saved orders here</h3>
+                    <h3 className="mt-3 font-serif text-xl">No customer orders yet</h3>
                     <p className="mt-2 text-sm leading-6 text-[#777268]">এখনো কোনো অনলাইন অর্ডার পাওয়া যায়নি, অথবা সার্চে মেলেনি।</p>
                   </div>
                 ) : (
@@ -501,7 +501,7 @@ function ManageStore() {
                     <InfoRow label="Order persistence" value="Server database" />
                   </div>
                   <div className="mt-5 rounded-xl border border-[#dfd4bf] bg-[#f0e9dc] p-4 text-sm leading-6 text-[#655d50]">
-                    <strong>Next production requirement:</strong> save checkout orders and customer records in the server database before relying on this panel for real order fulfilment.
+                    <strong>Operational note:</strong> নতুন অর্ডারগুলো এই ড্যাশবোর্ডে দেখা যাবে। কাস্টমারকে ফোন করে পেমেন্ট ও ডেলিভারি নিশ্চিত করো।
                   </div>
                 </div>
                 <div className="rounded-2xl border border-[#e0dbcf] bg-[#fbfaf6] p-5 sm:p-6 xl:col-span-2">
