@@ -8,7 +8,7 @@ export const uploadStoreImage = createServerFn({ method: "POST" })
   .inputValidator((data: { fileName: string; contentType: string; base64: string }) => data)
   .handler(async ({ data }) => {
     await assertAdmin();
-    if (!/^image\\/(jpeg|png|webp|gif)$/.test(data.contentType)) {
+    if (!["image/jpeg", "image/png", "image/webp", "image/gif"].includes(data.contentType)) {
       throw new Error("শুধু JPG, PNG, WEBP বা GIF ছবি আপলোড করা যাবে।");
     }
     const token = process.env.BLOB_READ_WRITE_TOKEN;
