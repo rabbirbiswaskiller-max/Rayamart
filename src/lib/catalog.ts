@@ -32,10 +32,10 @@ export type House = {
 
 export const houses: House[] = [
   {
-    slug: "lumiere",
-    name: "Lumière",
-    origin: "Lyon",
-    line: "Daylight skincare, bottled quietly.",
+    slug: "raya",
+    name: "RAYA",
+    origin: "Dhaka",
+    line: "Raya Mart's own brand.",
   },
   {
     slug: "mira",
