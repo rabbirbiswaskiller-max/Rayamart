@@ -104,6 +104,7 @@ function Home() {
         </div>
       </section>
 
+      {flash.length > 0 && (
       <section className="bg-pine text-ivory">
         <div className="mx-auto max-w-6xl px-4 py-12 sm:px-6">
           <div className="flex flex-wrap items-end justify-between gap-4">
@@ -126,7 +127,9 @@ function Home() {
           </div>
         </div>
       </section>
+      )}
 
+      {edit.length > 0 && (
       <section className="mx-auto max-w-6xl px-4 py-16 sm:px-6">
         <div className="flex items-end justify-between gap-4">
           <div>
@@ -140,6 +143,7 @@ function Home() {
           ))}
         </div>
       </section>
+      )}
 
       <section className="grid lg:grid-cols-2">
         <img
