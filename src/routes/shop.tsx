@@ -8,8 +8,10 @@ import {
   type ShopQuery,
 } from "@/lib/catalog";
 import { ProductCard } from "@/components/product-card";
+import { listStoreProducts } from "@/lib/admin/products";
 
 export const Route = createFileRoute("/shop")({
+  loader: () => listStoreProducts(),
   validateSearch: (search: Record<string, unknown>): ShopQuery => {
     const out: ShopQuery = {};
     if (typeof search.q === "string" && search.q.trim()) out.q = search.q.trim();
@@ -35,7 +37,8 @@ export const Route = createFileRoute("/shop")({
 function ShopPage() {
   const search = Route.useSearch();
   const navigate = Route.useNavigate();
-  const list = filterProducts(search);
+  const products = Route.useLoaderData();
+  const list = filterProducts(search, products);
   const cat = search.cat ? categoryBy(search.cat) : undefined;
   const house = search.house ? houseBy(search.house) : undefined;
 
