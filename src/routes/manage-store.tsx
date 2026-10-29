@@ -391,7 +391,7 @@ function ManageStore() {
                     <div className="flex items-center justify-between gap-3"><h3 className="font-serif text-xl">{managedProducts.some(p => p.slug === editingProduct.slug) ? "Edit product" : "Add a new product"}</h3><button type="button" onClick={() => setEditingProduct(null)} aria-label="Close product form"><X className="size-5" /></button></div>
                     <p className="text-xs leading-5 text-[#777268]">ছবির জন্য public image URL দাও। পরে সরাসরি ছবি আপলোডের সুবিধা যোগ করা যাবে।</p>
                     <div className="grid gap-3 sm:grid-cols-2">
-                      <AdminField label="Product name" value={editingProduct.name} onChange={v => setEditingProduct({...editingProduct,name:v,slug: editingProduct.slug || slugify(v)})} required />
+                      <AdminField label="Product name" value={editingProduct.name} onChange={v => setEditingProduct({...editingProduct,name:v,slug: (!editingProduct.slug || editingProduct.slug === slugify(editingProduct.name)) ? slugify(v) : editingProduct.slug})} required />
                       <AdminField label="Slug (unique URL)" value={editingProduct.slug} onChange={v => setEditingProduct({...editingProduct,slug:slugify(v)})} required />
                       <AdminField label="Price (৳)" type="number" value={String(editingProduct.price || "")} onChange={v => setEditingProduct({...editingProduct,price:Number(v)})} required />
                       <AdminField label="Compare-at price (optional)" type="number" value={String(editingProduct.compareAt || "")} onChange={v => setEditingProduct({...editingProduct,compareAt:v ? Number(v) : undefined})} />
