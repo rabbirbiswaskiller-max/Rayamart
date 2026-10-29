@@ -116,10 +116,10 @@ function ShopPage() {
 
       {list.length === 0 ? (
         <div className="mt-10 border border-line bg-ivory px-6 py-16 text-center">
-          <h2 className="font-serif text-3xl">Nothing under that name.</h2>
-          <p className="mt-2 text-ink-soft">Try serum, matcha, Velora, or clear the filters.</p>
+          <h2 className="font-serif text-3xl">New products are coming soon.</h2>
+          <p className="mt-2 text-ink-soft">We are preparing a new collection. Please check back soon.</p>
           <Link to="/shop" search={{}} className="mt-6 inline-flex h-12 items-center bg-pine px-6 text-sm text-ivory">
-            Clear and browse
+            Browse categories
           </Link>
         </div>
       ) : (
