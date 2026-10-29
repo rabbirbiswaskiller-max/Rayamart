@@ -1,7 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { BadgeCheck, RotateCcw, ShieldCheck, Truck } from "lucide-react";
 import { categories, houses, products } from "@/lib/catalog";
-import { DealClock } from "@/components/commerce";
 import { ProductCard } from "@/components/product-card";
 
 export const Route = createFileRoute("/")({
@@ -104,15 +103,16 @@ function Home() {
         </div>
       </section>
 
+{flash.length > 0 && (
       <section className="bg-pine text-ivory">
         <div className="mx-auto max-w-6xl px-4 py-12 sm:px-6">
           <div className="flex flex-wrap items-end justify-between gap-4">
             <div>
-              <p className="text-xs tracking-widest text-foam uppercase">The night desk</p>
-              <h2 className="mt-2 font-serif text-4xl text-ivory">Prices open until the clock closes.</h2>
+              <p className="text-xs tracking-widest text-foam uppercase">Limited arrival</p>
+              <h2 className="mt-2 font-serif text-4xl text-ivory">Small batches, brought in once.</h2>
             </div>
             <p className="text-sm text-ivory/80">
-              Ends in <DealClock />
+              Available while stock lasts
             </p>
           </div>
           <div className="no-scrollbar mt-8 flex gap-4 overflow-x-auto pb-2">
@@ -126,8 +126,9 @@ function Home() {
           </div>
         </div>
       </section>
+      )}
 
-      <section className="mx-auto max-w-6xl px-4 py-16 sm:px-6">
+      <section className="mx-auto max-w-6xl px-4 py-24 sm:px-6">
         <div className="flex items-end justify-between gap-4">
           <div>
             <p className="text-xs tracking-widest text-mute uppercase">The edit</p>
@@ -165,7 +166,7 @@ function Home() {
         </div>
       </section>
 
-      <section className="mx-auto max-w-6xl px-4 py-16 sm:px-6">
+      <section className="mx-auto max-w-6xl px-4 py-24 sm:px-6">
         <p className="text-xs tracking-widest text-mute uppercase">The houses</p>
         <h2 className="mt-2 font-serif text-4xl">Six names. No one else’s logos.</h2>
         <ul className="mt-8 divide-y divide-line border-y border-line">
