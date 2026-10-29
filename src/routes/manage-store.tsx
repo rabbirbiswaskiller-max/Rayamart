@@ -24,7 +24,7 @@ import {
   Wallet,
 } from "lucide-react";
 import { getAdminAccess } from "@/lib/admin/access";
-import { deleteStoreProduct, listStoreProducts, saveStoreProduct } from "@/lib/admin/products";
+import { deleteStoreProduct, listStoreProducts, saveStoreProduct, uploadStoreImage } from "@/lib/admin/products";
 import {
   categories,
   houses,
@@ -67,6 +67,7 @@ function ManageStore() {
   const [managedProducts, setManagedProducts] = useState<Product[]>([]);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [savingProduct, setSavingProduct] = useState(false);
+  const [uploadingImage, setUploadingImage] = useState(false);
   const orders = useCart((s) => s.orders);
 
   async function checkAccess() {
@@ -131,6 +132,21 @@ function ManageStore() {
     setError("");
     await checkAccess();
     setRefreshing(false);
+  }
+
+  async function handleImageFile(file?: File) {
+    if (!file) return;
+    setError("");
+    setUploadingImage(true);
+    try {
+      const prepared = await compressProductImage(file);
+      const result = await uploadStoreImage({ data: prepared });
+      setEditingProduct((current) => current ? { ...current, image: result.url } : current);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "ছবি আপলোড করা যায়নি। আবার চেষ্টা করো।");
+    } finally {
+      setUploadingImage(false);
+    }
   }
 
   const filteredProducts = useMemo(() => {
@@ -389,7 +405,7 @@ function ManageStore() {
                     finally { setSavingProduct(false); }
                   }}>
                     <div className="flex items-center justify-between gap-3"><h3 className="font-serif text-xl">{managedProducts.some(p => p.slug === editingProduct.slug) ? "Edit product" : "Add a new product"}</h3><button type="button" onClick={() => setEditingProduct(null)} aria-label="Close product form"><X className="size-5" /></button></div>
-                    <p className="text-xs leading-5 text-[#777268]">ছবির জন্য public image URL দাও। পরে সরাসরি ছবি আপলোডের সুবিধা যোগ করা যাবে।</p>
+                    <p className="text-xs leading-5 text-[#777268]">ফোনের Gallery থেকে ছবি বেছে নাও। ছবিটি স্বয়ংক্রিয়ভাবে আপলোড হবে এবং প্রোডাক্টের সঙ্গে সেভ হবে।</p>
                     <div className="grid gap-3 sm:grid-cols-2">
                       <AdminField label="Product name" value={editingProduct.name} onChange={v => setEditingProduct({...editingProduct,name:v,slug: (!editingProduct.slug || editingProduct.slug === slugify(editingProduct.name)) ? slugify(v) : editingProduct.slug})} required />
                       <AdminField label="Slug (unique URL)" value={editingProduct.slug} onChange={v => setEditingProduct({...editingProduct,slug:slugify(v)})} required />
@@ -399,7 +415,7 @@ function ManageStore() {
                       <AdminField label="Brand house slug (e.g. lumiere)" value={editingProduct.house} onChange={v => setEditingProduct({...editingProduct,house:slugify(v)})} required />
                       <AdminField label="Origin" value={editingProduct.origin} onChange={v => setEditingProduct({...editingProduct,origin:v})} required />
                       <AdminField label="Size / quantity" value={editingProduct.size} onChange={v => setEditingProduct({...editingProduct,size:v})} required />
-                      <AdminField label="Image URL" value={editingProduct.image} onChange={v => setEditingProduct({...editingProduct,image:v})} required />
+                      <div className="grid gap-2 rounded-xl border border-dashed border-[#cfc8b9] bg-[#fbfaf6] p-3"><label className="grid gap-2 text-xs font-medium text-[#55574e]">Product photo — ফোনের Gallery থেকে বেছে নাও<input type="file" accept="image/jpeg,image/png,image/webp,image/gif" onChange={e => void handleImageFile(e.target.files?.[0])} disabled={uploadingImage} className="block w-full min-w-0 text-sm file:mr-3 file:rounded-lg file:border-0 file:bg-[#1c3d34] file:px-3 file:py-2 file:font-semibold file:text-white disabled:opacity-60" /></label><p className="text-xs leading-5 text-[#777268]">{uploadingImage ? "ছবি ছোট করা ও আপলোড হচ্ছে…" : editingProduct.image ? "ছবি আপলোড হয়েছে। চাইলে নতুন ছবি বেছে বদলাতে পারো।" : "JPG, PNG, WEBP বা GIF। বড় ছবি স্বয়ংক্রিয়ভাবে ছোট করা হবে।"}</p>{editingProduct.image && <img src={editingProduct.image} alt={editingProduct.alt || editingProduct.name || "Product preview"} className="max-h-48 w-full rounded-lg bg-white object-contain" />}<input type="hidden" value={editingProduct.image} required readOnly aria-label="Uploaded image URL" /></div>
                       <AdminField label="Image alt text" value={editingProduct.alt} onChange={v => setEditingProduct({...editingProduct,alt:v})} required />
                       <AdminField label="Rating (0–5)" type="number" value={String(editingProduct.rating)} onChange={v => setEditingProduct({...editingProduct,rating:Number(v)})} />
                       <AdminField label="Review count" type="number" value={String(editingProduct.reviews)} onChange={v => setEditingProduct({...editingProduct,reviews:Number(v)})} />
@@ -412,7 +428,7 @@ function ManageStore() {
                       <label className="flex items-center gap-2"><input type="checkbox" checked={editingProduct.landed} onChange={e=>setEditingProduct({...editingProduct,landed:e.target.checked})} /> Ready in Dhaka</label>
                       <label className="flex items-center gap-2"><input type="checkbox" checked={Boolean(editingProduct.flash)} onChange={e=>setEditingProduct({...editingProduct,flash:e.target.checked})} /> Feature as flash deal</label>
                     </div>
-                    <div className="flex flex-wrap gap-2"><button disabled={savingProduct} className="h-11 rounded-xl bg-[#1c3d34] px-5 text-sm font-semibold text-white disabled:opacity-60">{savingProduct ? "Saving…" : "Save product"}</button><button type="button" onClick={() => setEditingProduct(null)} className="h-11 rounded-xl border border-[#ddd8cc] px-4 text-sm">Cancel</button></div>
+                    <div className="flex flex-wrap gap-2"><button disabled={savingProduct || uploadingImage || !editingProduct.image} className="h-11 rounded-xl bg-[#1c3d34] px-5 text-sm font-semibold text-white disabled:opacity-60">{uploadingImage ? "Uploading photo…" : savingProduct ? "Saving…" : "Save product"}</button><button type="button" onClick={() => setEditingProduct(null)} className="h-11 rounded-xl border border-[#ddd8cc] px-4 text-sm">Cancel</button></div>
                   </form>
                 )}
 
@@ -560,6 +576,41 @@ function OrderCard({ order }: { order: OrderRecord }) {
 
 function InfoRow({ label, value, link }: { label: string; value: string; link?: string }) {
   return <div className="flex flex-wrap items-start justify-between gap-2 py-3"><span className="text-sm text-[#777268]">{label}</span>{link ? <a href={link} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-right text-sm font-semibold underline underline-offset-4">{value} <ExternalLink className="size-3" /></a> : <span className="text-right text-sm font-semibold">{value}</span>}</div>;
+}
+
+function compressProductImage(file: File): Promise<{ fileName: string; contentType: string; base64: string }> {
+  return new Promise((resolve, reject) => {
+    if (!file.type.startsWith("image/")) { reject(new Error("একটি ছবি বেছে নাও।")); return; }
+    const objectUrl = URL.createObjectURL(file);
+    const image = new Image();
+    image.onload = () => {
+      URL.revokeObjectURL(objectUrl);
+      const maxSide = 1400;
+      const scale = Math.min(1, maxSide / Math.max(image.naturalWidth, image.naturalHeight));
+      const canvas = document.createElement("canvas");
+      canvas.width = Math.max(1, Math.round(image.naturalWidth * scale));
+      canvas.height = Math.max(1, Math.round(image.naturalHeight * scale));
+      const context = canvas.getContext("2d");
+      if (!context) { reject(new Error("ছবি প্রস্তুত করা যায়নি।")); return; }
+      context.drawImage(image, 0, 0, canvas.width, canvas.height);
+      canvas.toBlob((blob) => {
+        if (!blob) { reject(new Error("ছবি ছোট করা যায়নি।")); return; }
+        if (blob.size > 2_000_000) { reject(new Error("ছবিটি এখনও ২ MB-এর বেশি। ছোট ছবি বেছে নাও।")); return; }
+        const reader = new FileReader();
+        reader.onload = () => {
+          const value = String(reader.result ?? "");
+          const base64 = value.split(",")[1];
+          if (!base64) { reject(new Error("ছবির ডেটা পড়া যায়নি।")); return; }
+          const extension = blob.type === "image/png" ? "png" : blob.type === "image/jpeg" ? "jpg" : "webp";
+          resolve({ fileName: `raya-product-${Date.now()}.${extension}`, contentType: blob.type || "image/webp", base64 });
+        };
+        reader.onerror = () => reject(new Error("ছবির ডেটা পড়া যায়নি।"));
+        reader.readAsDataURL(blob);
+      }, "image/webp", 0.82);
+    };
+    image.onerror = () => { URL.revokeObjectURL(objectUrl); reject(new Error("ছবিটি খোলা যায়নি। অন্য ছবি বেছে নাও।")); };
+    image.src = objectUrl;
+  });
 }
 
 function blankProduct(): Product { return { slug: "", name: "", house: "lumiere", category: "skincare", origin: "Bangladesh", price: 0, rating: 0, reviews: 0, image: "", alt: "", landed: false, featured: 0, size: "1 piece", blurb: "", story: "", notes: [] }; }
