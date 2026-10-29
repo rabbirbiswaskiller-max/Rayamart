@@ -4,23 +4,24 @@ import { toast } from "sonner";
 import { BadgeCheck, Truck } from "lucide-react";
 import {
   categoryBy,
-  getProduct,
   houseBy,
   relatedTo,
 } from "@/lib/catalog";
 import { useCart } from "@/lib/store";
 import { Price, Qty, Stars } from "@/components/commerce";
 import { ProductCard } from "@/components/product-card";
+import { listStoreProducts } from "@/lib/admin/products";
 
 export const Route = createFileRoute("/product/$slug")({
-  loader: ({ params }) => {
-    const product = getProduct(params.slug);
+  loader: async ({ params }) => {
+    const products = await listStoreProducts();
+    const product = products.find((item) => item.slug === params.slug);
     if (!product) throw notFound();
-    return product;
+    return { product, products };
   },
   head: ({ loaderData }) => ({
-    meta: loaderData
-      ? [{ title: `${loaderData.name} — Raya Mart` }, { name: "description", content: loaderData.blurb }]
+    meta: loaderData?.product
+      ? [{ title: `${loaderData.product.name} — Raya Mart` }, { name: "description", content: loaderData.product.blurb }]
       : [],
   }),
   notFoundComponent: Missing,
@@ -28,12 +29,12 @@ export const Route = createFileRoute("/product/$slug")({
 });
 
 function ProductPage() {
-  const product = Route.useLoaderData();
+  const { product, products } = Route.useLoaderData();
   const house = houseBy(product.house);
   const category = categoryBy(product.category);
   const add = useCart((s) => s.add);
   const [qty, setQty] = useState(1);
-  const related = relatedTo(product.slug);
+  const related = relatedTo(product.slug, products);
 
   return (
     <div>
@@ -72,7 +73,7 @@ function ProductPage() {
               type="button"
               className="inline-flex h-12 flex-1 items-center justify-center bg-pine px-6 text-sm text-ivory hover:bg-pine-deep sm:flex-none"
               onClick={() => {
-                add(product.slug, qty);
+                add(product, qty);
                 toast(product.name, { description: `${qty} placed in your bag.` });
               }}
             >
