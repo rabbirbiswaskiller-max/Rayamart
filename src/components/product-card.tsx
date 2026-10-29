@@ -54,7 +54,7 @@ export function ProductCard({ product }: { product: Product }) {
             type="button"
             className="h-11 shrink-0 border border-ink px-4 text-xs tracking-widest text-ink uppercase motion-safe:transition hover:bg-ink hover:text-ivory"
             onClick={() => {
-              add(product.slug, 1);
+              add(product, 1);
               toast(product.name, {
                 description: "Placed in your bag.",
                 action: {
