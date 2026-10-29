@@ -11,6 +11,10 @@ import {
   LayoutDashboard,
   LogOut,
   Package,
+  Plus,
+  Pencil,
+  Trash2,
+  X,
   RefreshCw,
   Search,
   ShieldCheck,
@@ -20,6 +24,7 @@ import {
   Wallet,
 } from "lucide-react";
 import { getAdminAccess } from "@/lib/admin/access";
+import { deleteStoreProduct, listStoreProducts, saveStoreProduct } from "@/lib/admin/products";
 import {
   categories,
   houses,
@@ -60,12 +65,19 @@ function ManageStore() {
   const [search, setSearch] = useState("");
   const [orderSearch, setOrderSearch] = useState("");
   const [refreshing, setRefreshing] = useState(false);
+  const [managedProducts, setManagedProducts] = useState<Product[]>([]);
+  const [editingProduct, setEditingProduct] = useState<Product | null>(null);
+  const [savingProduct, setSavingProduct] = useState(false);
   const orders = useCart((s) => s.orders);
 
   async function checkAccess() {
     try {
       const result = await getAdminAccess();
       setAccess(result);
+      if (result.allowed) {
+        const currentProducts = await listStoreProducts();
+        setManagedProducts(currentProducts);
+      }
     } catch {
       setError("লগইন যাচাই করা যায়নি। ইন্টারনেট সংযোগ দেখে আবার চেষ্টা করো।");
     }
@@ -124,14 +136,14 @@ function ManageStore() {
 
   const filteredProducts = useMemo(() => {
     const term = search.trim().toLowerCase();
-    if (!term) return products;
-    return products.filter((p) =>
+    if (!term) return managedProducts;
+    return managedProducts.filter((p) =>
       [p.name, p.slug, p.origin, p.category, p.house, p.blurb]
         .join(" ")
         .toLowerCase()
         .includes(term),
     );
-  }, [search]);
+  }, [search, managedProducts]);
 
   const filteredOrders = useMemo(() => {
     const term = orderSearch.trim().toLowerCase();
@@ -146,7 +158,7 @@ function ManageStore() {
 
   const grossSales = orders.reduce((sum, order) => sum + order.total, 0);
   const averageOrder = orders.length ? Math.round(grossSales / orders.length) : 0;
-  const readyProducts = products.filter((p) => p.landed).length;
+  const readyProducts = managedProducts.filter((p) => p.landed).length;
 
   if (!access || !access.allowed) {
     return (
@@ -309,7 +321,7 @@ function ManageStore() {
             {section === "overview" && (
               <div className="grid gap-5">
                 <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-                  <Metric icon={Package} label="Catalogue products" value={String(products.length)} note="Configured on storefront" />
+                  <Metric icon={Package} label="Catalogue products" value={String(managedProducts.length)} note="Saved in product database" />
                   <Metric icon={Tags} label="Categories" value={String(categories.length)} note="Shop categories" />
                   <Metric icon={ClipboardList} label="Local orders" value={String(orders.length)} note="This browser only" />
                   <Metric icon={Wallet} label="Local order value" value={taka(grossSales)} note="Not live business revenue" />
@@ -325,7 +337,7 @@ function ManageStore() {
                       <button onClick={() => setSection("products")} className="inline-flex items-center gap-1 text-sm font-semibold underline underline-offset-4">View all <ChevronRight className="size-4" /></button>
                     </div>
                     <div className="mt-5 divide-y divide-[#e9e4da]">
-                      {products.slice(0, 5).map((product) => <ProductRow key={product.slug} product={product} />)}
+                      {managedProducts.slice(0, 5).map((product) => <ProductRow key={product.slug} product={product} />)}
                     </div>
                   </div>
 
@@ -335,7 +347,7 @@ function ManageStore() {
                       <div className="mt-5 space-y-4">
                         <StatusRow label="Admin email configured" detail="Server-side access rule" ok={access.emailConfigured} />
                         <StatusRow label="Admin session" detail="Signed in to this account" ok={access.allowed} />
-                        <StatusRow label="Catalogue loaded" detail={`${products.length} products in site code`} ok={products.length > 0} />
+                        <StatusRow label="Catalogue loaded" detail={`${managedProducts.length} products in database`} ok={managedProducts.length > 0} />
                         <StatusRow label="Order storage" detail="Browser-local demo storage" ok={false} />
                       </div>
                     </div>
@@ -357,15 +369,66 @@ function ManageStore() {
             {section === "products" && (
               <div className="rounded-2xl border border-[#e0dbcf] bg-[#fbfaf6] p-4 sm:p-6">
                 <div className="flex flex-wrap items-center justify-between gap-3">
-                  <div><h2 className="font-serif text-2xl">All products</h2><p className="mt-1 text-xs text-[#777268]">{filteredProducts.length} of {products.length} products</p></div>
-                  <label className="relative block w-full sm:max-w-xs">
-                    <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-[#858073]" />
-                    <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search products…" className="h-10 w-full rounded-xl border border-[#ddd8cc] bg-white pl-9 pr-3 text-sm outline-none focus:border-[#1c3d34]" />
-                  </label>
+                  <div><h2 className="font-serif text-2xl">Product catalogue</h2><p className="mt-1 text-xs text-[#777268]">{filteredProducts.length} of {managedProducts.length} saved products</p></div>
+                  <div className="flex w-full flex-wrap gap-2 sm:w-auto">
+                    <label className="relative block min-w-0 flex-1 sm:w-56">
+                      <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-[#858073]" />
+                      <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search products…" className="h-10 w-full rounded-xl border border-[#ddd8cc] bg-white pl-9 pr-3 text-sm outline-none focus:border-[#1c3d34]" />
+                    </label>
+                    <button onClick={() => setEditingProduct(blankProduct())} className="inline-flex h-10 items-center justify-center gap-2 rounded-xl bg-[#1c3d34] px-4 text-sm font-semibold text-white"><Plus className="size-4" /> Add product</button>
+                  </div>
                 </div>
+
+                {editingProduct && (
+                  <form className="mt-5 grid gap-3 rounded-2xl border border-[#d9d4c8] bg-white p-4 sm:p-5" onSubmit={async (event) => {
+                    event.preventDefault(); setSavingProduct(true); setError("");
+                    try {
+                      const result = await saveStoreProduct({ data: { product: editingProduct } });
+                      setManagedProducts((current) => [...current.filter((p) => p.slug !== result.product.slug), result.product].sort((a,b) => a.featured-b.featured));
+                      setEditingProduct(null);
+                    } catch (err) { setError(err instanceof Error ? err.message : "Product save failed."); }
+                    finally { setSavingProduct(false); }
+                  }}>
+                    <div className="flex items-center justify-between gap-3"><h3 className="font-serif text-xl">{managedProducts.some(p => p.slug === editingProduct.slug) ? "Edit product" : "Add a new product"}</h3><button type="button" onClick={() => setEditingProduct(null)} aria-label="Close product form"><X className="size-5" /></button></div>
+                    <p className="text-xs leading-5 text-[#777268]">ছবির জন্য public image URL দাও। পরে সরাসরি ছবি আপলোডের সুবিধা যোগ করা যাবে।</p>
+                    <div className="grid gap-3 sm:grid-cols-2">
+                      <AdminField label="Product name" value={editingProduct.name} onChange={v => setEditingProduct({...editingProduct,name:v,slug: editingProduct.slug || slugify(v)})} required />
+                      <AdminField label="Slug (unique URL)" value={editingProduct.slug} onChange={v => setEditingProduct({...editingProduct,slug:slugify(v)})} required />
+                      <AdminField label="Price (৳)" type="number" value={String(editingProduct.price || "")} onChange={v => setEditingProduct({...editingProduct,price:Number(v)})} required />
+                      <AdminField label="Compare-at price (optional)" type="number" value={String(editingProduct.compareAt || "")} onChange={v => setEditingProduct({...editingProduct,compareAt:v ? Number(v) : undefined})} />
+                      <AdminField label="Category slug (e.g. skincare)" value={editingProduct.category} onChange={v => setEditingProduct({...editingProduct,category:slugify(v)})} required />
+                      <AdminField label="Brand house slug (e.g. lumiere)" value={editingProduct.house} onChange={v => setEditingProduct({...editingProduct,house:slugify(v)})} required />
+                      <AdminField label="Origin" value={editingProduct.origin} onChange={v => setEditingProduct({...editingProduct,origin:v})} required />
+                      <AdminField label="Size / quantity" value={editingProduct.size} onChange={v => setEditingProduct({...editingProduct,size:v})} required />
+                      <AdminField label="Image URL" value={editingProduct.image} onChange={v => setEditingProduct({...editingProduct,image:v})} required />
+                      <AdminField label="Image alt text" value={editingProduct.alt} onChange={v => setEditingProduct({...editingProduct,alt:v})} required />
+                      <AdminField label="Rating (0–5)" type="number" value={String(editingProduct.rating)} onChange={v => setEditingProduct({...editingProduct,rating:Number(v)})} />
+                      <AdminField label="Review count" type="number" value={String(editingProduct.reviews)} onChange={v => setEditingProduct({...editingProduct,reviews:Number(v)})} />
+                      <AdminField label="Display order" type="number" value={String(editingProduct.featured)} onChange={v => setEditingProduct({...editingProduct,featured:Number(v)})} />
+                      <AdminField label="Notes (comma-separated)" value={editingProduct.notes.join(", ")} onChange={v => setEditingProduct({...editingProduct,notes:v.split(",").map(n=>n.trim()).filter(Boolean)})} />
+                      <div className="sm:col-span-2"><AdminField label="Short description" value={editingProduct.blurb} onChange={v => setEditingProduct({...editingProduct,blurb:v})} required /></div>
+                      <div className="sm:col-span-2"><AdminField label="Full description" value={editingProduct.story} onChange={v => setEditingProduct({...editingProduct,story:v})} required /></div>
+                    </div>
+                    <div className="flex flex-wrap gap-4 text-sm">
+                      <label className="flex items-center gap-2"><input type="checkbox" checked={editingProduct.landed} onChange={e=>setEditingProduct({...editingProduct,landed:e.target.checked})} /> Ready in Dhaka</label>
+                      <label className="flex items-center gap-2"><input type="checkbox" checked={Boolean(editingProduct.flash)} onChange={e=>setEditingProduct({...editingProduct,flash:e.target.checked})} /> Feature as flash deal</label>
+                    </div>
+                    <div className="flex flex-wrap gap-2"><button disabled={savingProduct} className="h-11 rounded-xl bg-[#1c3d34] px-5 text-sm font-semibold text-white disabled:opacity-60">{savingProduct ? "Saving…" : "Save product"}</button><button type="button" onClick={() => setEditingProduct(null)} className="h-11 rounded-xl border border-[#ddd8cc] px-4 text-sm">Cancel</button></div>
+                  </form>
+                )}
+
                 <div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-                  {filteredProducts.map((product) => <ProductCard key={product.slug} product={product} />)}
-                  {filteredProducts.length === 0 && <p className="py-8 text-sm text-[#777268]">কোনো পণ্য পাওয়া যায়নি। অন্য নাম দিয়ে খুঁজে দেখো।</p>}
+                  {filteredProducts.map(product => (
+                    <div key={product.slug} className="overflow-hidden rounded-xl border border-[#e8e2d7] bg-white">
+                      <img src={product.image} alt={product.alt} className="aspect-[4/3] w-full object-cover" />
+                      <div className="p-4">
+                        <div className="flex items-start justify-between gap-3"><div><h3 className="font-serif text-xl">{product.name}</h3><p className="mt-1 text-xs text-[#777268]">{product.category} · {product.slug}</p></div><strong className="shrink-0 text-sm">{taka(product.price)}</strong></div>
+                        <p className="mt-2 line-clamp-2 text-sm text-[#6c6a60]">{product.blurb}</p>
+                        <div className="mt-4 flex gap-2"><button onClick={() => setEditingProduct({...product})} className="inline-flex h-9 items-center gap-2 rounded-lg border border-[#ddd8cc] px-3 text-sm"><Pencil className="size-3.5" /> Edit</button><button onClick={async () => { if (!window.confirm(`“${product.name}” ডিলিট করবে?`)) return; setError(""); try { await deleteStoreProduct({data:{slug:product.slug}}); setManagedProducts(current=>current.filter(p=>p.slug!==product.slug)); } catch(err) { setError(err instanceof Error ? err.message : "Delete failed."); } }} className="inline-flex h-9 items-center gap-2 rounded-lg border border-red-200 px-3 text-sm text-red-700"><Trash2 className="size-3.5" /> Delete</button></div>
+                      </div>
+                    </div>
+                  ))}
+                  {filteredProducts.length === 0 && <div className="rounded-xl border border-dashed border-[#d8d1c4] px-4 py-12 text-center sm:col-span-2 xl:col-span-3"><Package className="mx-auto size-8 text-[#8a8478]" /><h3 className="mt-3 font-serif text-xl">No products yet</h3><p className="mt-2 text-sm text-[#777268]">“Add product” চাপ দিয়ে প্রথম প্রোডাক্ট যোগ করো।</p></div>}
                 </div>
               </div>
             )}
@@ -407,7 +470,7 @@ function ManageStore() {
                     <InfoRow label="Live website" value="rayamart.vercel.app" link="https://rayamart.vercel.app" />
                     <InfoRow label="Admin route" value="/manage-store" />
                     <InfoRow label="Currency" value="Bangladeshi Taka (৳)" />
-                    <InfoRow label="Product count" value={String(products.length)} />
+                    <InfoRow label="Product count" value={String(managedProducts.length)} />
                     <InfoRow label="Categories" value={String(categories.length)} />
                     <InfoRow label="Brand houses" value={String(houses.length)} />
                   </div>
@@ -499,3 +562,7 @@ function OrderCard({ order }: { order: OrderRecord }) {
 function InfoRow({ label, value, link }: { label: string; value: string; link?: string }) {
   return <div className="flex flex-wrap items-start justify-between gap-2 py-3"><span className="text-sm text-[#777268]">{label}</span>{link ? <a href={link} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-right text-sm font-semibold underline underline-offset-4">{value} <ExternalLink className="size-3" /></a> : <span className="text-right text-sm font-semibold">{value}</span>}</div>;
 }
+
+function blankProduct(): Product { return { slug: "", name: "", house: "lumiere", category: "skincare", origin: "Bangladesh", price: 0, rating: 0, reviews: 0, image: "", alt: "", landed: false, featured: 0, size: "1 piece", blurb: "", story: "", notes: [] }; }
+function slugify(value: string) { return value.toLowerCase().trim().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, ""); }
+function AdminField({ label, value, onChange, type = "text", required = false }: { label: string; value: string; onChange: (value: string) => void; type?: string; required?: boolean }) { return <label className="grid gap-1.5 text-xs font-medium text-[#55574e]">{label}<input type={type} value={value} onChange={e => onChange(e.target.value)} required={required} className="h-10 min-w-0 rounded-lg border border-[#ddd8cc] bg-[#fbfaf6] px-3 text-sm text-[#182f28] outline-none focus:border-[#1c3d34]" /></label>; }
