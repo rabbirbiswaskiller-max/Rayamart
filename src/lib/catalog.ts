@@ -158,6 +158,26 @@ export const products: Product[] = [
     notes: ["Rice extract", "Panthenol", "Beta-glucan", "Fragrance-free"],
   },
 
+  {
+    slug: "the-arrival",
+    name: "The Arrival",
+    house: "mira",
+    category: "sets",
+    origin: "Wrapped in Dhaka",
+    price: 3450,
+    compareAt: 3630,
+    rating: 4.9,
+    reviews: 52,
+    image: "/media/arrival.jpg",
+    alt: "Hands opening a cream gift box lined with tissue and a glass bottle",
+    landed: true,
+    featured: 10,
+    size: "Veil + Camellia, wrapped",
+    blurb: "Rice Veil and Camellia Shine, in the cream box.",
+    story:
+      "A gift that does not look like a promotion. We wrap Atelier Mira Rice Veil with Kōen Camellia Shine in tissue, in the cream box you see here. Leave a name in the order note and we will write the card by hand.",
+    notes: ["Rice Veil", "Camellia Shine", "Handwritten card"],
+  },
 ];
 
 export const cities = [
