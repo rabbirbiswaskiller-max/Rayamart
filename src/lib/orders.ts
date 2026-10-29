@@ -51,10 +51,6 @@ export const createCustomerOrder = createServerFn({ method: "POST" })
       if (!product) throw new Error("একটি প্রোডাক্ট আর পাওয়া যাচ্ছে না। পেজ রিফ্রেশ করে আবার চেষ্টা করো।");
       lines.push({ slug: product.slug, name: product.name, qty: item.qty, price: Number(product.price), image: product.image });
     }
-    const allLanded = lines.every((line) => {
-      // The persisted product is the source of truth for availability.
-      return true;
-    });
     if (customer.pay === "cod") {
       const products = await Promise.all(lines.map(async (line) => {
         const rows = await sql.query<{ data: Product }>("SELECT data FROM raya_products WHERE slug = $1 LIMIT 1", [line.slug]);
