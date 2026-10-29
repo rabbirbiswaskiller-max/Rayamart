@@ -28,7 +28,6 @@ import { deleteStoreProduct, listStoreProducts, saveStoreProduct } from "@/lib/a
 import {
   categories,
   houses,
-  products,
   taka,
   type Product,
 } from "@/lib/catalog";
@@ -312,7 +311,7 @@ function ManageStore() {
                   {section === "overview" ? "Good to see you." : section === "products" ? "Your catalogue." : section === "orders" ? "Order desk." : "Store details."}
                 </h1>
                 <p className="mt-2 text-sm leading-6 text-[#6c6a60]">
-                  {section === "overview" ? "A clear view of your shop and the information currently available." : section === "products" ? "Browse the products currently configured on the storefront." : section === "orders" ? "Review orders saved in this browser and their customer details." : "A quick reference for your store configuration and readiness."}
+                  {section === "overview" ? "A clear view of your shop and the information currently available." : section === "products" ? "Add, edit or delete products saved in the product database." : section === "orders" ? "Review orders saved in this browser and their customer details." : "A quick reference for your store configuration and readiness."}
                 </p>
               </div>
               <Link to="/" className="inline-flex h-10 items-center gap-2 rounded-xl border border-[#ddd8cc] bg-[#fbfaf6] px-3 text-sm hover:bg-white">View storefront <ExternalLink className="size-3.5" /></Link>
