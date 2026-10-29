@@ -1,7 +1,8 @@
 import { useState, type FormEvent } from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { cities, payMethods, taka, onlineDiscountFor, SHIP_FEE, type PayMethod } from "@/lib/catalog";
-import { useCart, useCartDetailed } from "@/lib/store";
+import { useCartDetailed } from "@/lib/store";
+import { createCustomerOrder } from "@/lib/orders";
 
 export const Route = createFileRoute("/checkout")({
   head: () => ({ meta: [{ title: "Checkout — Raya Mart" }] }),
@@ -28,10 +29,11 @@ const empty: Draft = {
 
 function CheckoutPage() {
   const { lines, subtotal } = useCartDetailed();
-  const placeOrder = useCart((s) => s.placeOrder);
   const navigate = useNavigate();
   const [draft, setDraft] = useState<Draft>(empty);
   const [errors, setErrors] = useState<Partial<Record<keyof Draft, string>>>({});
+  const [submitError, setSubmitError] = useState("");
+  const [submitting, setSubmitting] = useState(false);
   const isCOD = draft.pay === "cod";
   const discountAmount = isCOD ? 0 : onlineDiscountFor(subtotal);
   const shippingAmount = isCOD ? SHIP_FEE : 0;
@@ -54,7 +56,7 @@ function CheckoutPage() {
     setDraft((d) => ({ ...d, [key]: value }));
   }
 
-  function onSubmit(e: FormEvent) {
+  async function onSubmit(e: FormEvent) {
     e.preventDefault();
     const next: Partial<Record<keyof Draft, string>> = {};
     if (draft.name.trim().length < 2) next.name = "Please leave your name.";
@@ -67,8 +69,19 @@ function CheckoutPage() {
     }
     setErrors(next);
     if (Object.keys(next).length > 0) return;
-    const id = placeOrder({ ...draft, phone, name: draft.name.trim(), address: draft.address.trim() });
-    if (id) navigate({ to: "/order/$id", params: { id } });
+    setSubmitError("");
+    setSubmitting(true);
+    try {
+      const result = await createCustomerOrder({ data: {
+        customer: { ...draft, phone, name: draft.name.trim(), address: draft.address.trim() },
+        items: lines.map((line) => ({ slug: line.slug, qty: line.qty })),
+      } });
+      navigate({ to: "/order/$id", params: { id: result.id } });
+    } catch (err) {
+      setSubmitError(err instanceof Error ? err.message : "অর্ডার জমা হয়নি। আবার চেষ্টা করো।");
+    } finally {
+      setSubmitting(false);
+    }
   }
 
   return (
@@ -143,8 +156,9 @@ function CheckoutPage() {
           />
         </Field>
 
-        <button type="submit" className="mt-8 inline-flex h-12 w-full items-center justify-center bg-pine text-sm text-ivory hover:bg-pine-deep sm:w-auto sm:px-10">
-          Request this order
+        {submitError ? <p role="alert" className="mt-4 text-sm text-brick">{submitError}</p> : null}
+        <button type="submit" disabled={submitting} className="mt-8 inline-flex h-12 w-full items-center justify-center bg-pine text-sm text-ivory hover:bg-pine-deep disabled:opacity-60 sm:w-auto sm:px-10">
+          {submitting ? "Saving order…" : "Request this order"}
         </button>
       </form>
 
