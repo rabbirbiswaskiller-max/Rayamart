@@ -2,13 +2,14 @@ import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import {
   getProduct,
+  type Product,
   shippingFor,
   onlineDiscountFor,
   SHIP_FEE,
   type PayMethod,
 } from "@/lib/catalog";
 
-export type CartLine = { slug: string; qty: number };
+export type CartLine = { slug: string; qty: number; product?: Product };
 
 export type OrderRecord = {
   id: string;
@@ -33,7 +34,7 @@ export type OrderRecord = {
 type CartState = {
   items: CartLine[];
   orders: OrderRecord[];
-  add: (slug: string, qty?: number) => void;
+  add: (product: Product | string, qty?: number) => void;
   setQty: (slug: string, qty: number) => void;
   remove: (slug: string) => void;
   clear: () => void;
@@ -45,12 +46,13 @@ export const useCart = create<CartState>()(
     (set, get) => ({
       items: [],
       orders: [],
-      add: (slug, qty = 1) => {
-        const product = getProduct(slug);
+      add: (productOrSlug, qty = 1) => {
+        const product = typeof productOrSlug === "string" ? getProduct(productOrSlug) : productOrSlug;
         if (!product) return;
+        const slug = product.slug;
         set((state) => {
           const existing = state.items.find((i) => i.slug === slug);
-          if (!existing) return { items: [...state.items, { slug, qty }] };
+          if (!existing) return { items: [...state.items, { slug, qty, product }] };
           return {
             items: state.items.map((i) =>
               i.slug === slug ? { ...i, qty: Math.min(8, i.qty + qty) } : i,
@@ -75,7 +77,7 @@ export const useCart = create<CartState>()(
       placeOrder: (customer) => {
         const lines = get()
           .items.map((item) => {
-            const product = getProduct(item.slug);
+            const product = item.product ?? getProduct(item.slug);
             if (!product) return null;
             return {
               slug: product.slug,
@@ -125,7 +127,7 @@ export function useCartDetailed() {
   const items = useCart((s) => s.items);
   const lines = items
     .map((item) => {
-      const product = getProduct(item.slug);
+      const product = item.product ?? getProduct(item.slug);
       if (!product) return null;
       return { ...item, product };
     })
