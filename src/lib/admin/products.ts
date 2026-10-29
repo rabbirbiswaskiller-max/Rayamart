@@ -2,6 +2,40 @@ import { createServerFn } from "@tanstack/react-start";
 import { getSql } from "@/lib/db";
 import type { Product } from "@/lib/catalog";
 
+const IMAGE_MAX_BYTES = 2_000_000;
+
+export const uploadStoreImage = createServerFn({ method: "POST" })
+  .inputValidator((data: { fileName: string; contentType: string; base64: string }) => data)
+  .handler(async ({ data }) => {
+    await assertAdmin();
+    if (!/^image\\/(jpeg|png|webp|gif)$/.test(data.contentType)) {
+      throw new Error("শুধু JPG, PNG, WEBP বা GIF ছবি আপলোড করা যাবে।");
+    }
+    const token = process.env.BLOB_READ_WRITE_TOKEN;
+    if (!token) throw new Error("Image storage এখনো প্রস্তুত নয়। Vercel BLOB_READ_WRITE_TOKEN সেটিং পরীক্ষা করতে হবে।");
+    if (!data.base64 || data.base64.length > Math.ceil(IMAGE_MAX_BYTES * 1.4)) {
+      throw new Error("ছবিটি অনেক বড়। ছোট ছবি বেছে আবার চেষ্টা করো।");
+    }
+    const bytes = Buffer.from(data.base64, "base64");
+    if (!bytes.length || bytes.length > IMAGE_MAX_BYTES) throw new Error("ছবির সাইজ ২ MB-এর মধ্যে রাখো।");
+    const safeName = data.fileName.replace(/[^a-zA-Z0-9._-]/g, "-").slice(-90) || "product-image.webp";
+    const response = await fetch(`https://blob.vercel-storage.com/products/${Date.now()}-${safeName}`, {
+      method: "PUT",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "x-api-version": "7",
+        "x-content-type": data.contentType,
+        "x-add-random-suffix": "1",
+        "Content-Type": data.contentType,
+      },
+      body: bytes,
+    });
+    if (!response.ok) throw new Error("ছবি আপলোড হয়নি। আবার চেষ্টা করো।");
+    const result = await response.json() as { url?: string };
+    if (!result.url) throw new Error("আপলোড হয়েছে, কিন্তু ছবির লিংক পাওয়া যায়নি।");
+    return { url: result.url };
+  });
+
 async function assertAdmin() {
   const { getSessionUser } = await import("@/lib/auth/verify.server");
   const user = await getSessionUser();
