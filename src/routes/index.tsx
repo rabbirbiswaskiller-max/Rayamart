@@ -144,6 +144,7 @@ function Home() {
       </section>
       )}
 
+      {products.length > 0 && (
       <section className="grid lg:grid-cols-2">
         <img
           src="/media/arrival.jpg"
@@ -167,6 +168,7 @@ function Home() {
           </Link>
         </div>
       </section>
+      )}
 
       <section className="mx-auto max-w-6xl px-4 py-24 sm:px-6">
         <p className="text-xs tracking-widest text-mute uppercase">The houses</p>
