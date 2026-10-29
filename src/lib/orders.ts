@@ -62,7 +62,7 @@ export const createCustomerOrder = createServerFn({ method: "POST" })
     const isCOD = customer.pay === "cod";
     const discount = !isCOD && subtotal >= DISCOUNT_OVER ? Math.round(subtotal * DISCOUNT_RATE) : 0;
     const shipping = isCOD ? SHIP_FEE : 0;
-    const id = `RM-${crypto.randomUUID().replace(/-/g, "").slice(0, 12).toUpperCase()}`;
+    const id = `RM-${crypto.randomUUID().replace(/-/g, "").toUpperCase()}`;
     const order: StoredOrder = {
       id, createdAt: new Date().toISOString(), lines, subtotal, discount, shipping,
       total: subtotal - discount + shipping, advanceDue: isCOD ? SHIP_FEE : 0,
@@ -76,7 +76,7 @@ export const createCustomerOrder = createServerFn({ method: "POST" })
 export const getCustomerOrder = createServerFn({ method: "GET" })
   .inputValidator((data: { id: string }) => data)
   .handler(async ({ data }): Promise<StoredOrder | null> => {
-    if (!/^RM-[A-F0-9]{12}$/.test(data.id)) return null;
+    if (!/^RM-[A-F0-9]{32}$/.test(data.id)) return null;
     const sql = await getSql();
     const rows = await sql.query<{ data: StoredOrder }>("SELECT data FROM raya_orders WHERE id = $1 LIMIT 1", [data.id]);
     return rows[0]?.data ?? null;
