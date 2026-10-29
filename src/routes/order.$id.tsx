@@ -1,6 +1,9 @@
+import { useState, type FormEvent } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { payMethods, taka } from "@/lib/catalog";
-import { getCustomerOrder } from "@/lib/orders";
+import { getCustomerOrder, submitPaymentTrx } from "@/lib/orders";
+
+const PAY_NUMBER = "01974414564";
 
 export const Route = createFileRoute("/order/$id")({
   head: () => ({ meta: [{ title: "Order received — Raya Mart" }] }),
@@ -10,7 +13,12 @@ export const Route = createFileRoute("/order/$id")({
 
 function OrderPage() {
   const { order } = Route.useLoaderData();
+  const [trx, setTrx] = useState("");
+  const [paid, setPaid] = useState(Boolean(order?.paid));
+  const [message, setMessage] = useState("");
+  const [busy, setBusy] = useState(false);
   const pay = payMethods.find((m) => m.id === order?.customer.pay);
+  const needsTrx = order?.customer.pay === "bkash" || order?.customer.pay === "nagad";
 
   if (!order) {
     return (
@@ -33,6 +41,21 @@ function OrderPage() {
     minute: "2-digit",
   });
 
+  async function onSubmitTrx(e: FormEvent) {
+    e.preventDefault();
+    setMessage("");
+    setBusy(true);
+    try {
+      const result = await submitPaymentTrx({ data: { id: order!.id, trx } });
+      setMessage(result.message);
+      if (result.ok) setPaid(true);
+    } catch {
+      setMessage("Could not verify the payment. Please try again.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
   return (
     <div className="mx-auto max-w-2xl px-4 py-14 sm:px-6">
       <p className="text-xs tracking-widest text-gold uppercase">Request received</p>
@@ -42,6 +65,40 @@ function OrderPage() {
       </p>
       <p className="mt-8 font-serif text-4xl tabular-nums">{order.id}</p>
       <p className="mt-1 text-sm text-mute">{when} · {order.customer.city}</p>
+
+      {needsTrx ? (
+        <section className="mt-10 border border-line bg-ivory p-6">
+          <p className="text-xs tracking-widest text-gold uppercase">Send money</p>
+          {paid ? (
+            <p className="mt-3 font-serif text-3xl">Payment confirmed.</p>
+          ) : (
+            <>
+              <p className="mt-3 text-ink-soft">
+                Send exactly <strong className="tabular-nums">{taka(order.total)}</strong> to{" "}
+                <strong className="tabular-nums">{PAY_NUMBER}</strong> using {pay?.name} “Send Money”.
+                Then paste the TrxID you receive below.
+              </p>
+              <form onSubmit={onSubmitTrx} className="mt-5 flex flex-col gap-3 sm:flex-row">
+                <input
+                  className="h-12 flex-1 border border-line bg-paper px-3 text-sm uppercase outline-none focus:border-pine"
+                  placeholder="TrxID, e.g. DJQ4KXX961U"
+                  value={trx}
+                  onChange={(e) => setTrx(e.target.value)}
+                  required
+                />
+                <button
+                  type="submit"
+                  disabled={busy || trx.trim().length < 6}
+                  className="h-12 bg-pine px-6 text-sm text-ivory hover:bg-pine-deep disabled:opacity-60"
+                >
+                  {busy ? "Checking…" : "Confirm payment"}
+                </button>
+              </form>
+              {message ? <p role="alert" className="mt-3 text-sm text-brick">{message}</p> : null}
+            </>
+          )}
+        </section>
+      ) : null}
 
       <ul className="mt-8 divide-y divide-line border-y border-line">
         {order.lines.map((line) => (
