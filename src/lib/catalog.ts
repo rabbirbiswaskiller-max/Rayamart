@@ -136,49 +136,7 @@ export type Product = {
   notes: string[];
 };
 
-export const products: Product[] = [
-  {
-    slug: "rice-veil",
-    name: "Rice Veil",
-    house: "mira",
-    category: "skincare",
-    origin: "Seoul, Korea",
-    price: 1890,
-    compareAt: 2450,
-    rating: 4.8,
-    reviews: 242,
-    image: "/media/veil.jpg",
-    alt: "Matte stoneware jar of Atelier Mira Rice Veil cream",
-    landed: true,
-    featured: 2,
-    size: "50 ml",
-    blurb: "A rice cream with the weight of a veil. Cool, then gone.",
-    story:
-      "Atelier Mira mills rice in small batches and folds it into a cream that never feels like a mask. It is the piece we recommend if you only want one thing from Seoul. The jar is stoneware, meant to be kept.",
-    notes: ["Rice extract", "Panthenol", "Beta-glucan", "Fragrance-free"],
-  },
-
-  {
-    slug: "the-arrival",
-    name: "The Arrival",
-    house: "mira",
-    category: "sets",
-    origin: "Wrapped in Dhaka",
-    price: 3450,
-    compareAt: 3630,
-    rating: 4.9,
-    reviews: 52,
-    image: "/media/arrival.jpg",
-    alt: "Hands opening a cream gift box lined with tissue and a glass bottle",
-    landed: true,
-    featured: 10,
-    size: "Veil + Camellia, wrapped",
-    blurb: "Rice Veil and Camellia Shine, in the cream box.",
-    story:
-      "A gift that does not look like a promotion. We wrap Atelier Mira Rice Veil with Kōen Camellia Shine in tissue, in the cream box you see here. Leave a name in the order note and we will write the card by hand.",
-    notes: ["Rice Veil", "Camellia Shine", "Handwritten card"],
-  },
-];
+export const products: Product[] = [];
 
 export const cities = [
   "Dhaka",
