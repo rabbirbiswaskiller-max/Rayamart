@@ -1,15 +1,15 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { payMethods, taka } from "@/lib/catalog";
-import { useCart } from "@/lib/store";
+import { getCustomerOrder } from "@/lib/orders";
 
 export const Route = createFileRoute("/order/$id")({
   head: () => ({ meta: [{ title: "Order received — Raya Mart" }] }),
+  loader: async ({ params }) => ({ order: await getCustomerOrder({ data: { id: params.id } }) }),
   component: OrderPage,
 });
 
 function OrderPage() {
-  const { id } = Route.useParams();
-  const order = useCart((s) => s.orders.find((o) => o.id === id));
+  const { order } = Route.useLoaderData();
   const pay = payMethods.find((m) => m.id === order?.customer.pay);
 
   if (!order) {
@@ -17,7 +17,7 @@ function OrderPage() {
       <div className="mx-auto max-w-lg px-4 py-20">
         <h1 className="font-serif text-5xl">We cannot see that order on this device.</h1>
         <p className="mt-3 text-ink-soft">
-          Orders stay on the phone or computer that placed them. If this is a different device, the desk still has the request.
+          The order is stored on Raya Mart’s server, so it can be checked from another device too.
         </p>
         <Link to="/track" className="mt-6 inline-flex h-12 items-center border border-ink px-6 text-sm">
           Try tracking
