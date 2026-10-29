@@ -31,7 +31,7 @@ import {
   taka,
   type Product,
 } from "@/lib/catalog";
-import { useCart, type OrderRecord } from "@/lib/store";
+import { listAdminOrders, type StoredOrder } from "@/lib/orders";
 import { signOut } from "@/lib/auth/client";
 
 export const Route = createFileRoute("/manage-store")({
@@ -65,18 +65,19 @@ function ManageStore() {
   const [orderSearch, setOrderSearch] = useState("");
   const [refreshing, setRefreshing] = useState(false);
   const [managedProducts, setManagedProducts] = useState<Product[]>([]);
+  const [managedOrders, setManagedOrders] = useState<StoredOrder[]>([]);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [savingProduct, setSavingProduct] = useState(false);
   const [uploadingImage, setUploadingImage] = useState(false);
-  const orders = useCart((s) => s.orders);
 
   async function checkAccess() {
     try {
       const result = await getAdminAccess();
       setAccess(result);
       if (result.allowed) {
-        const currentProducts = await listStoreProducts();
+        const [currentProducts, currentOrders] = await Promise.all([listStoreProducts(), listAdminOrders()]);
         setManagedProducts(currentProducts);
+        setManagedOrders(currentOrders);
       }
     } catch {
       setError("লগইন যাচাই করা যায়নি। ইন্টারনেট সংযোগ দেখে আবার চেষ্টা করো।");
@@ -162,17 +163,17 @@ function ManageStore() {
 
   const filteredOrders = useMemo(() => {
     const term = orderSearch.trim().toLowerCase();
-    if (!term) return orders;
-    return orders.filter((o) =>
+    if (!term) return managedOrders;
+    return managedOrders.filter((o) =>
       [o.id, o.customer.name, o.customer.phone, o.customer.city]
         .join(" ")
         .toLowerCase()
         .includes(term),
     );
-  }, [orders, orderSearch]);
+  }, [managedOrders, orderSearch]);
 
-  const grossSales = orders.reduce((sum, order) => sum + order.total, 0);
-  const averageOrder = orders.length ? Math.round(grossSales / orders.length) : 0;
+  const grossSales = managedOrders.reduce((sum, order) => sum + order.total, 0);
+  const averageOrder = managedOrders.length ? Math.round(grossSales / managedOrders.length) : 0;
   const readyProducts = managedProducts.filter((p) => p.landed).length;
 
   if (!access || !access.allowed) {
@@ -338,8 +339,8 @@ function ManageStore() {
                 <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
                   <Metric icon={Package} label="Catalogue products" value={String(managedProducts.length)} note="Saved in product database" />
                   <Metric icon={Tags} label="Categories" value={String(categories.length)} note="Shop categories" />
-                  <Metric icon={ClipboardList} label="Local orders" value={String(orders.length)} note="This browser only" />
-                  <Metric icon={Wallet} label="Local order value" value={taka(grossSales)} note="Not live business revenue" />
+                  <Metric icon={ClipboardList} label="Local orders" value={String(managedOrders.length)} note="Saved in server database" />
+                  <Metric icon={Wallet} label="Local order value" value={taka(grossSales)} note="Based on saved orders" />
                 </div>
 
                 <div className="grid gap-5 xl:grid-cols-[1.2fr_.8fr]">
@@ -363,7 +364,7 @@ function ManageStore() {
                         <StatusRow label="Admin email configured" detail="Server-side access rule" ok={access.emailConfigured} />
                         <StatusRow label="Admin session" detail="Signed in to this account" ok={access.allowed} />
                         <StatusRow label="Catalogue loaded" detail={`${managedProducts.length} products in database`} ok={managedProducts.length > 0} />
-                        <StatusRow label="Order storage" detail="Browser-local demo storage" ok={false} />
+                        <StatusRow label="Order storage" detail="Server database" ok={false} />
                       </div>
                     </div>
                     <div className="rounded-2xl border border-[#dfd4bf] bg-[#f0e9dc] p-4 sm:p-6">
@@ -374,7 +375,7 @@ function ManageStore() {
                 </div>
 
                 <div className="grid gap-3 sm:grid-cols-3">
-                  <QuickCard icon={ShoppingBag} title="Orders" value={`${orders.length} saved here`} action="Review orders" onClick={() => setSection("orders")} />
+                  <QuickCard icon={ShoppingBag} title="Orders" value={`${managedOrders.length} saved orders`} action="Review orders" onClick={() => setSection("orders")} />
                   <QuickCard icon={Boxes} title="Ready in Dhaka" value={`${readyProducts} products`} action="Browse catalogue" onClick={() => setSection("products")} />
                   <QuickCard icon={Store} title="Brand houses" value={String(houses.length)} action="Store details" onClick={() => setSection("store")} />
                 </div>
@@ -451,14 +452,14 @@ function ManageStore() {
             {section === "orders" && (
               <div className="rounded-2xl border border-[#e0dbcf] bg-[#fbfaf6] p-4 sm:p-6">
                 <div className="flex flex-wrap items-center justify-between gap-3">
-                  <div><h2 className="font-serif text-2xl">Saved orders</h2><p className="mt-1 text-xs text-[#777268]">Only orders stored in this device's browser</p></div>
+                  <div><h2 className="font-serif text-2xl">Saved orders</h2><p className="mt-1 text-xs text-[#777268]">Orders submitted by customers and saved on the server</p></div>
                   <label className="relative block w-full sm:max-w-xs">
                     <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-[#858073]" />
                     <input value={orderSearch} onChange={(e) => setOrderSearch(e.target.value)} placeholder="Search order or customer…" className="h-10 w-full rounded-xl border border-[#ddd8cc] bg-white pl-9 pr-3 text-sm outline-none focus:border-[#1c3d34]" />
                   </label>
                 </div>
                 <div className="mt-4 grid gap-3 sm:grid-cols-3">
-                  <MiniMetric label="Orders saved here" value={String(orders.length)} />
+                  <MiniMetric label="Orders saved on server" value={String(managedOrders.length)} />
                   <MiniMetric label="Order value" value={taka(grossSales)} />
                   <MiniMetric label="Average order" value={taka(averageOrder)} />
                 </div>
@@ -466,7 +467,7 @@ function ManageStore() {
                   <div className="mt-5 rounded-xl border border-dashed border-[#d8d1c4] px-4 py-12 text-center">
                     <ClipboardList className="mx-auto size-8 text-[#8a8478]" />
                     <h3 className="mt-3 font-serif text-xl">No saved orders here</h3>
-                    <p className="mt-2 text-sm leading-6 text-[#777268]">এই ব্রাউজারে কোনো অর্ডার নেই, অথবা সার্চে মেলেনি। এটি সব কাস্টমারের অনলাইন অর্ডারের তালিকা নয়।</p>
+                    <p className="mt-2 text-sm leading-6 text-[#777268]">এখনো কোনো অনলাইন অর্ডার পাওয়া যায়নি, অথবা সার্চে মেলেনি।</p>
                   </div>
                 ) : (
                   <div className="mt-5 space-y-3">
@@ -497,7 +498,7 @@ function ManageStore() {
                     <InfoRow label="Free delivery threshold" value="৳3,500+" />
                     <InfoRow label="Online payment discount" value="3% on ৳3,000+" />
                     <InfoRow label="Payment methods" value="bKash, Nagad, Card, COD" />
-                    <InfoRow label="Order persistence" value="Browser-local only (current build)" />
+                    <InfoRow label="Order persistence" value="Server database" />
                   </div>
                   <div className="mt-5 rounded-xl border border-[#dfd4bf] bg-[#f0e9dc] p-4 text-sm leading-6 text-[#655d50]">
                     <strong>Next production requirement:</strong> save checkout orders and customer records in the server database before relying on this panel for real order fulfilment.
@@ -562,7 +563,7 @@ function ProductCard({ product }: { product: Product }) {
   </article>;
 }
 
-function OrderCard({ order }: { order: OrderRecord }) {
+function OrderCard({ order }: { order: StoredOrder }) {
   const created = new Date(order.createdAt);
   const date = Number.isNaN(created.getTime()) ? order.createdAt : created.toLocaleString("en-BD", { dateStyle: "medium", timeStyle: "short" });
   return <article className="rounded-xl border border-[#e8e2d7] bg-white p-4 sm:p-5">
