@@ -113,6 +113,12 @@ export const categories: Category[] = [
     line: "Edited together",
     image: "/media/arrival.jpg",
   },
+  {
+    slug: "mens-fashion",
+    name: "Men’s Fashion",
+    line: "Everyday style, made easy",
+    image: "/media/arrival.jpg",
+  },
 ];
 
 export type Product = {
