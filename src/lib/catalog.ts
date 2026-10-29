@@ -198,8 +198,8 @@ export type ShopQuery = {
   ready?: "1";
 };
 
-export function filterProducts(query: ShopQuery) {
-  let list = products.slice();
+export function filterProducts(query: ShopQuery, sourceProducts: Product[] = products) {
+  let list = sourceProducts.slice();
   if (query.cat) list = list.filter((p) => p.category === query.cat);
   if (query.house) list = list.filter((p) => p.house === query.house);
   if (query.ready === "1") list = list.filter((p) => p.landed);
@@ -222,13 +222,13 @@ export function filterProducts(query: ShopQuery) {
   return list;
 }
 
-export function relatedTo(slug: string) {
-  const current = getProduct(slug);
+export function relatedTo(slug: string, sourceProducts: Product[] = products) {
+  const current = sourceProducts.find((p) => p.slug === slug);
   if (!current) return [];
-  const same = products.filter(
+  const same = sourceProducts.filter(
     (p) => p.slug !== slug && p.category === current.category,
   );
-  const rest = products.filter(
+  const rest = sourceProducts.filter(
     (p) => p.slug !== slug && p.category !== current.category,
   );
   return [...same, ...rest].slice(0, 4);
