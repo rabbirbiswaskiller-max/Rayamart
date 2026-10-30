@@ -54,10 +54,26 @@ export function DealClock() {
 
   useEffect(() => {
     const key = "raya-deal-end";
-    let end = Number(sessionStorage.getItem(key));
+    // Storage can be blocked (in-app browsers, strict privacy settings). Every
+    // access is guarded so a blocked read or write never breaks the page.
+    const readEnd = (): number => {
+      try {
+        return Number(window.sessionStorage.getItem(key));
+      } catch {
+        return 0;
+      }
+    };
+    const writeEnd = (value: number) => {
+      try {
+        window.sessionStorage.setItem(key, String(value));
+      } catch {
+        /* storage unavailable — the countdown still runs for this visit */
+      }
+    };
+    let end = readEnd();
     if (!end || Number.isNaN(end) || end < Date.now()) {
       end = Date.now() + 1000 * 60 * 60 * 14;
-      sessionStorage.setItem(key, String(end));
+      writeEnd(end);
     }
     const tick = () => {
       const diff = Math.max(0, end - Date.now());
