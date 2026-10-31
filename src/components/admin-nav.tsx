@@ -9,6 +9,7 @@ const links = [
   { to: "/admin-partners", label: "Partners" },
   { to: "/admin-withdrawals", label: "Withdrawals" },
   { to: "/admin-payments", label: "Payments" },
+  { to: "/admin-reports", label: "Reports" },
 ] as const;
 
 export function AdminNav() {
