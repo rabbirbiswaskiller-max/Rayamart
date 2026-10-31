@@ -3,6 +3,7 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { cities, payMethods, taka, onlineDiscountFor, SHIP_FEE, type PayMethod } from "@/lib/catalog";
 import { useCartDetailed } from "@/lib/store";
 import { createCustomerOrder } from "@/lib/orders";
+import { readRef } from "@/lib/referral";
 
 export const Route = createFileRoute("/checkout")({
   head: () => ({ meta: [{ title: "Checkout — Raya Mart" }] }),
@@ -75,6 +76,7 @@ function CheckoutPage() {
       const result = await createCustomerOrder({ data: {
         customer: { ...draft, phone, name: draft.name.trim(), address: draft.address.trim() },
         items: lines.map((line) => ({ slug: line.slug, qty: line.qty })),
+        ref: readRef(),
       } });
       navigate({ to: "/order/$id", params: { id: result.id } });
     } catch (err) {
