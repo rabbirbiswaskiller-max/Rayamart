@@ -1,16 +1,14 @@
 import { useState, type FormEvent } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { payMethods, taka } from "@/lib/catalog";
-import { trackOrder, type CustomerOrderStatus } from "@/lib/orders";
+import { trackOrderDetail, type AccountOrderStatus, type TrackDetail } from "@/lib/customers";
 
 export const Route = createFileRoute("/track")({
   head: () => ({ meta: [{ title: "Track — Raya Mart" }] }),
   component: TrackPage,
 });
 
-type TrackResult = Awaited<ReturnType<typeof trackOrder>>;
-
-const statusCopy: Record<CustomerOrderStatus, { title: string; body: string }> = {
+const statusCopy: Record<AccountOrderStatus, { title: string; body: string }> = {
   unpaid: {
     title: "Waiting for payment",
     body: "Send the payment to the number on your order page, then enter the TrxID there. We will update this page once it is confirmed.",
@@ -29,10 +27,18 @@ const statusCopy: Record<CustomerOrderStatus, { title: string; body: string }> =
   },
 };
 
+const shipCopy: Record<string, string> = {
+  pending: "Being prepared",
+  processing: "Being prepared",
+  shipped: "Shipped",
+  delivered: "Delivered",
+  cancelled: "Cancelled",
+};
+
 function TrackPage() {
   const [orderId, setOrderId] = useState("");
   const [phone, setPhone] = useState("");
-  const [result, setResult] = useState<TrackResult | null>(null);
+  const [result, setResult] = useState<TrackDetail | null>(null);
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
 
@@ -42,7 +48,7 @@ function TrackPage() {
     setResult(null);
     setBusy(true);
     try {
-      setResult(await trackOrder({ data: { id: orderId.trim(), phone: phone.trim() } }));
+      setResult(await trackOrderDetail({ data: { id: orderId.trim(), phone: phone.trim() } }));
     } catch {
       setError("Could not look up the order right now. Please try again.");
     } finally {
@@ -102,19 +108,31 @@ function TrackPage() {
           <p className="font-serif text-3xl tabular-nums">{result.id}</p>
           <p className="mt-1 text-sm text-mute">
             {new Date(result.createdAt).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}
-            {" · "}
-            {result.city}
+            {result.city ? " · " + result.city : ""}
           </p>
 
           <div className="mt-6 border-t border-line pt-5">
             <p className="text-xs tracking-widest text-gold uppercase">Status</p>
             <p className="mt-2 font-serif text-2xl">{statusCopy[result.status].title}</p>
             <p className="mt-2 text-sm text-ink-soft">{statusCopy[result.status].body}</p>
+            {result.status !== "unpaid" && result.status !== "cancelled" ? (
+              <p className="mt-3 text-sm">
+                Shipping: <strong>{shipCopy[result.fulfillment] ?? "Being prepared"}</strong>
+              </p>
+            ) : null}
+            {result.tracking ? (
+              <p className="mt-3 text-sm">
+                Tracking number: <span className="font-mono">{result.tracking}</span>
+              </p>
+            ) : null}
           </div>
 
           <ul className="mt-6 space-y-1 border-t border-line pt-5 text-sm">
-            {result.items.map((item) => (
-              <li key={item}>{item}</li>
+            {result.lines.map((line, i) => (
+              <li key={i} className="flex justify-between gap-3">
+                <span>{line.name} × {line.qty}</span>
+                <span className="tabular-nums">{taka(line.price * line.qty)}</span>
+              </li>
             ))}
           </ul>
           <dl className="mt-4 space-y-2 border-t border-line pt-4 text-sm">
@@ -122,6 +140,12 @@ function TrackPage() {
               <dt className="text-mute">Payment</dt>
               <dd>{payMethods.find((m) => m.id === result.pay)?.name ?? result.pay}</dd>
             </div>
+            {result.discount > 0 ? (
+              <div className="flex justify-between">
+                <dt className="text-mute">Online discount</dt>
+                <dd className="tabular-nums">-{taka(result.discount)}</dd>
+              </div>
+            ) : null}
             <div className="flex justify-between">
               <dt className="text-mute">Total</dt>
               <dd className="tabular-nums">{taka(result.total)}</dd>

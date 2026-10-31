@@ -4,9 +4,11 @@ import { cities, payMethods, taka, onlineDiscountFor, SHIP_FEE, type PayMethod }
 import { useCartDetailed } from "@/lib/store";
 import { createCustomerOrder } from "@/lib/orders";
 import { readRef } from "@/lib/referral";
+import { listMyAddresses, type SavedAddress } from "@/lib/addresses";
 
 export const Route = createFileRoute("/checkout")({
   head: () => ({ meta: [{ title: "Checkout — Raya Mart" }] }),
+  loader: () => listMyAddresses(),
   component: CheckoutPage,
 });
 
@@ -31,7 +33,13 @@ const empty: Draft = {
 function CheckoutPage() {
   const { lines, subtotal } = useCartDetailed();
   const navigate = useNavigate();
-  const [draft, setDraft] = useState<Draft>(empty);
+  const saved: SavedAddress[] = Route.useLoaderData();
+  const defaultAddress = saved.find((a) => a.isDefault) ?? saved[0];
+  const [draft, setDraft] = useState<Draft>(() =>
+    defaultAddress
+      ? { ...empty, name: defaultAddress.name, phone: defaultAddress.phone, city: defaultAddress.city, address: defaultAddress.address }
+      : empty,
+  );
   const [errors, setErrors] = useState<Partial<Record<keyof Draft, string>>>({});
   const [submitError, setSubmitError] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -80,7 +88,7 @@ function CheckoutPage() {
       } });
       navigate({ to: "/order/$id", params: { id: result.id } });
     } catch (err) {
-      setSubmitError(err instanceof Error ? err.message : "অর্ডার জমা হয়নি। আবার চেষ্টা করো।");
+      setSubmitError(err instanceof Error ? err.message : "Order could not be saved. Please try again.");
     } finally {
       setSubmitting(false);
     }
@@ -94,6 +102,26 @@ function CheckoutPage() {
         <p className="mt-3 max-w-lg text-sm text-ink-soft">
           We call this number to confirm the piece is in hand. You are not charged on this page.
         </p>
+
+        {saved.length > 0 ? (
+          <label className="mt-6 block text-xs tracking-widest text-mute uppercase">
+            Saved address
+            <select
+              className={input}
+              defaultValue={defaultAddress?.id}
+              onChange={(e) => {
+                const a = saved.find((x) => x.id === e.target.value);
+                if (a) setDraft((d) => ({ ...d, name: a.name, phone: a.phone, city: a.city, address: a.address }));
+              }}
+            >
+              {saved.map((a) => (
+                <option key={a.id} value={a.id}>
+                  {a.label || a.name} — {a.city}
+                </option>
+              ))}
+            </select>
+          </label>
+        ) : null}
 
         <div className="mt-8 grid gap-5 sm:grid-cols-2">
           <Field label="Name" error={errors.name}>
