@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { AdminNav } from "@/components/admin-nav";
 import { getCustomerStats } from "@/lib/customers";
 
 export const Route = createFileRoute("/admin-customers")({
@@ -21,6 +22,7 @@ function AdminCustomers() {
       <p className="text-xs tracking-widest text-mute uppercase">Admin</p>
       <h1 className="mt-2 font-serif text-4xl">গ্রাহক সাইনআপ</h1>
       <p className="mt-2 text-sm text-ink-soft">সময় বাংলাদেশ সময় অনুযায়ী।</p>
+      <AdminNav />
 
       <div className="mt-8 grid grid-cols-2 gap-3 sm:grid-cols-4">
         {cards.map(([label, value]) => (

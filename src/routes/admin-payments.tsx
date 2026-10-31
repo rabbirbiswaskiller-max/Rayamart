@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { AdminNav } from "@/components/admin-nav";
 import { taka } from "@/lib/catalog";
 import { listAllAdminOrders } from "@/lib/orders";
 
@@ -28,6 +29,7 @@ function AdminPayments() {
       <p className="mt-2 text-sm text-ink-soft">
         {paidCount} paid · {rows.length - paidCount} waiting
       </p>
+      <AdminNav />
 
       <div className="mt-8 overflow-x-auto">
         <table className="w-full text-left text-sm">
