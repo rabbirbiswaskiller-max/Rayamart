@@ -96,8 +96,8 @@ export function Shell({ children }: { children: ReactNode }) {
       </header>
 
       {open ? (
-        <div className="fixed inset-0 z-50 bg-paper lg:hidden">
-          <div className="flex h-16 items-center justify-between px-4">
+        <div className="fixed inset-0 z-50 overflow-y-auto overscroll-contain bg-paper lg:hidden">
+          <div className="sticky top-0 flex h-16 items-center justify-between bg-paper px-4">
             <span className="font-serif text-3xl">Raya</span>
             <button
               type="button"
@@ -108,7 +108,7 @@ export function Shell({ children }: { children: ReactNode }) {
               <X className="size-5" />
             </button>
           </div>
-          <nav className="flex flex-col px-6 py-4">
+          <nav className="flex flex-col px-6 py-4 pb-16">
             <MobileLink to="/" onClick={() => setOpen(false)}>
               Home
             </MobileLink>
