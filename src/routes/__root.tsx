@@ -4,14 +4,19 @@ import { Shell } from "@/components/shell";
 import { useRefCapture } from "@/lib/referral";
 import appCss from "../styles.css?url";
 
-// Set VITE_ADMIN_ONLY=1 in the admin deployment to hide the storefront there.
+// VITE_ADMIN_ONLY=1 is set only in the admin deployment (rayamart-admin).
+// The main site never serves admin pages; the admin deployment serves nothing else.
 const adminOnly = import.meta.env.VITE_ADMIN_ONLY === "1";
 
 export const Route = createRootRoute({
   beforeLoad: ({ location }) => {
-    if (!adminOnly) return;
     const p = location.pathname;
-    const allowed = p === "/account" || p.startsWith("/admin-") || p.startsWith("/manage-store");
+    const isAdminPath = p.startsWith("/admin-") || p.startsWith("/manage-store");
+    if (!adminOnly) {
+      if (isAdminPath) throw redirect({ to: "/" });
+      return;
+    }
+    const allowed = p === "/account" || isAdminPath;
     if (!allowed) throw redirect({ to: "/account" });
   },
   head: () => ({

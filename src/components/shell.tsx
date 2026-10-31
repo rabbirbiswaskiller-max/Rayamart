@@ -23,7 +23,7 @@ export function Shell({ children }: { children: ReactNode }) {
     <div className="min-h-screen">
       {!quiet ? (
         <div className="bg-pine px-4 py-2 text-center text-xs tracking-wide text-ivory">
-          Sealed at origin · Confirmed by phone before you pay · Complimentary delivery over ৳3,500
+          Sealed at origin · Confirmed by phone before you pay · Complimentary delivery over ৳,500
         </div>
       ) : null}
       <header className="sticky top-0 z-40 border-b border-line bg-paper/95 backdrop-blur-md">
@@ -61,7 +61,7 @@ export function Shell({ children }: { children: ReactNode }) {
             <SearchForm className="w-full max-w-xs" />
           </div>
           <Link
-            to="/manage-store"
+            to="/account"
             className="hidden h-10 items-center border border-line px-3 text-xs tracking-wide hover:border-ink sm:inline-flex"
           >
             Sign in
@@ -140,7 +140,7 @@ export function Shell({ children }: { children: ReactNode }) {
             <MobileLink to="/bag" onClick={() => setOpen(false)}>
               Bag
             </MobileLink>
-            <MobileLink to="/manage-store" onClick={() => setOpen(false)}>
+            <MobileLink to="/account" onClick={() => setOpen(false)}>
               Sign in
             </MobileLink>
           </nav>
@@ -231,7 +231,7 @@ function MobileLink({
 }: {
   children: ReactNode;
   onClick: () => void;
-  to: "/" | "/shop" | "/house" | "/track" | "/partner" | "/bag" | "/manage-store";
+  to: "/" | "/shop" | "/house" | "/track" | "/partner" | "/bag" | "/account";
   search?: ShopQuery;
 }) {
   if (to === "/shop") {
