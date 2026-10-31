@@ -8,6 +8,9 @@ import type { ShopQuery } from "@/lib/catalog";
 
 const emptySearch: ShopQuery = {};
 
+// The admin deployment (VITE_ADMIN_ONLY=1) shows only the admin area, not the storefront.
+const adminOnly = import.meta.env.VITE_ADMIN_ONLY === "1";
+
 export function Shell({ children }: { children: ReactNode }) {
   const path = useRouterState({ select: (s) => s.location.pathname });
   const quiet = path.startsWith("/checkout") || path.startsWith("/order");
@@ -18,6 +21,22 @@ export function Shell({ children }: { children: ReactNode }) {
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  if (adminOnly) {
+    return (
+      <div className="min-h-screen">
+        <header className="border-b border-line bg-paper">
+          <div className="mx-auto flex h-16 max-w-6xl items-center gap-2 px-4 sm:px-6">
+            <Mark />
+            <span className="font-serif text-3xl leading-none tracking-tight">Raya</span>
+            <span className="text-xs tracking-widest text-mute uppercase">Admin</span>
+          </div>
+        </header>
+        <main>{children}</main>
+        <Toaster position="top-center" />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen">
