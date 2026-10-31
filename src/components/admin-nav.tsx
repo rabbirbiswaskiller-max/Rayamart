@@ -4,6 +4,7 @@ const links = [
   { to: "/admin-dashboard", label: "Dashboard" },
   { to: "/admin-orders", label: "Orders" },
   { to: "/manage-store", label: "Products" },
+  { to: "/admin-pricing", label: "Pricing" },
   { to: "/admin-customers", label: "Customers" },
   { to: "/admin-partners", label: "Partners" },
   { to: "/admin-withdrawals", label: "Withdrawals" },

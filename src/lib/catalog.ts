@@ -140,6 +140,10 @@ export type Product = {
   blurb: string;
   story: string;
   notes: string[];
+  // Admin only: what Raya Mart pays the house. Never sent to the storefront.
+  cost?: number;
+  // false hides the piece from the storefront and blocks new orders.
+  active?: boolean;
 };
 
 export const products: Product[] = [];

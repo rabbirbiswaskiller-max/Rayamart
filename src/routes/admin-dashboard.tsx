@@ -29,6 +29,8 @@ function AdminDashboard() {
     ["মোট অর্ডার", String(stats.totalOrders)],
     ["আজকের সেলস", taka(stats.todaySales)],
     ["এই মাসের সেলস", taka(stats.monthSales)],
+    ["আজকের লাভ (আনুমানিক)", taka(stats.todayProfit)],
+    ["এই মাসের লাভ (আনুমানিক)", taka(stats.monthProfit)],
   ];
 
   return (
@@ -37,7 +39,7 @@ function AdminDashboard() {
       <h1 className="mt-2 font-serif text-4xl">ড্যাশবোর্ড</h1>
       <AdminNav />
 
-      <div className="mt-8 grid grid-cols-2 gap-3 lg:grid-cols-3">
+      <div className="mt-8 grid grid-cols-2 gap-3 lg:grid-cols-4">
         {cards.map(([label, value]) => (
           <div key={label} className="border border-line bg-ivory p-4">
             <p className="text-xs text-mute">{label}</p>
@@ -45,6 +47,11 @@ function AdminDashboard() {
           </div>
         ))}
       </div>
+      {stats.unknownProfitOrders > 0 && (
+        <p className="mt-3 text-xs text-mute">
+          {stats.unknownProfitOrders}টি পেইড অর্ডারের কস্ট প্রাইস নেই, তাই লাভে ধরা হয়নি। <Link to="/admin-pricing" className="underline underline-offset-4">দাম ও লাভ</Link> পেজে কস্ট দাও।
+        </p>
+      )}
 
       <div className="mt-12 flex items-baseline justify-between">
         <h2 className="font-serif text-2xl">সাম্প্রতিক অর্ডার</h2>

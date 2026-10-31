@@ -12,9 +12,9 @@ export const uploadStoreImage = createServerFn({ method: "POST" })
       throw new Error("শুধু JPG, PNG, WEBP বা GIF ছবি আপলোড করা যাবে।");
     }
     const token = process.env.BLOB_READ_WRITE_TOKEN;
-    if (!token) throw new Error("Image storage এখনো প্রস্তুত নয়। Vercel BLOB_READ_WRITE_TOKEN সেটিং পরীক্ষা করতে হবে।");
+    if (!token) throw new Error("Image storage এখনো প্রস্তুত নয়। Vercel BLOB_READ_WRITE_TOKEN সেটিং পরীক্ষা করতে হবে।");
     if (!data.base64 || data.base64.length > Math.ceil(IMAGE_MAX_BYTES * 1.4)) {
-      throw new Error("ছবিটি অনেক বড়। ছোট ছবি বেছে আবার চেষ্টা করো।");
+      throw new Error("ছবিটি অনেক বড়। ছোট ছবি বেছে আবার চেষ্টা করো।");
     }
     const bytes = Buffer.from(data.base64, "base64");
     if (!bytes.length || bytes.length > IMAGE_MAX_BYTES) throw new Error("ছবির সাইজ ২ MB-এর মধ্যে রাখো।");
@@ -30,9 +30,9 @@ export const uploadStoreImage = createServerFn({ method: "POST" })
       },
       body: bytes,
     });
-    if (!response.ok) throw new Error("ছবি আপলোড হয়নি। আবার চেষ্টা করো।");
+    if (!response.ok) throw new Error("ছবি আপলোড হয়নি। আবার চেষ্টা করো।");
     const result = await response.json() as { url?: string };
-    if (!result.url) throw new Error("আপলোড হয়েছে, কিন্তু ছবির লিংক পাওয়া যায়নি।");
+    if (!result.url) throw new Error("আপলোড হয়েছে, কিন্তু ছবির লিংক পাওয়া যায়নি।");
     return { url: result.url };
   });
 
@@ -70,10 +70,25 @@ function validateProduct(input: unknown): Product {
   };
 }
 
+function withoutCost(product: Product): Product {
+  const copy: Product = { ...product };
+  delete copy.cost;
+  return copy;
+}
+
+// Storefront and the Products page. Cost price is never returned here.
 export const listStoreProducts = createServerFn({ method: "GET" }).handler(async () => {
   const sql = await getSql();
   const rows = await sql.query<{ data: Product }>("SELECT data FROM raya_products ORDER BY (data->>'featured')::int ASC, data->>'name' ASC");
-  return rows.map((row) => row.data);
+  return rows.map((row) => withoutCost(row.data));
+});
+
+// Admin pricing page: includes cost and active flag.
+export const listAdminProducts = createServerFn({ method: "GET" }).handler(async (): Promise<Product[]> => {
+  await assertAdmin();
+  const sql = await getSql();
+  const rows = await sql.query<{ data: Product }>("SELECT data FROM raya_products ORDER BY (data->>'featured')::int ASC, data->>'name' ASC");
+  return rows.map((row) => ({ ...row.data, active: row.data.active !== false }));
 });
 
 export const saveStoreProduct = createServerFn({ method: "POST" })
@@ -82,11 +97,35 @@ export const saveStoreProduct = createServerFn({ method: "POST" })
     await assertAdmin();
     const product = validateProduct(data.product);
     const sql = await getSql();
+    // Keep cost and active flag already stored, unless this save sends new values.
+    const existing = await sql.query<{ data: Product }>("SELECT data FROM raya_products WHERE slug = $1 LIMIT 1", [product.slug]);
+    const prev = existing[0]?.data;
+    const incoming = data.product as Partial<Product>;
+    const merged: Product = {
+      ...product,
+      cost: typeof incoming.cost === "number" ? incoming.cost : prev?.cost,
+      active: typeof incoming.active === "boolean" ? incoming.active : (prev?.active ?? true),
+    };
     await sql.query(
       "INSERT INTO raya_products (slug, data, updated_at) VALUES ($1, $2::jsonb, now()) ON CONFLICT (slug) DO UPDATE SET data = EXCLUDED.data, updated_at = now()",
-      [product.slug, JSON.stringify(product)],
+      [merged.slug, JSON.stringify(merged)],
     );
-    return { success: true, product };
+    return { success: true, product: withoutCost(merged) };
+  });
+
+// Admin: set cost price and on/off for one product.
+export const updateProductMeta = createServerFn({ method: "POST" })
+  .inputValidator((data: { slug: string; cost: number; active: boolean }) => data)
+  .handler(async ({ data }) => {
+    await assertAdmin();
+    if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(data.slug)) throw new Error("Invalid product slug.");
+    if (!Number.isFinite(data.cost) || data.cost < 0) throw new Error("Cost price must be zero or more.");
+    const sql = await getSql();
+    await sql.query(
+      "UPDATE raya_products SET data = data || $2::jsonb, updated_at = now() WHERE slug = $1",
+      [data.slug, JSON.stringify({ cost: Math.round(data.cost), active: data.active === true })],
+    );
+    return { success: true };
   });
 
 export const deleteStoreProduct = createServerFn({ method: "POST" })

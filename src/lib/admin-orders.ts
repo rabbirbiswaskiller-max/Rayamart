@@ -17,6 +17,10 @@ export type DashboardStats = {
   awaitingPayment: number;
   todaySales: number;
   monthSales: number;
+  todayProfit: number;
+  monthProfit: number;
+  // Paid orders with no cost price recorded, so they are left out of profit.
+  unknownProfitOrders: number;
 };
 
 const BD_OFFSET = 6 * 3600 * 1000; // Bangladesh time is UTC+6
@@ -30,6 +34,14 @@ function fulfillmentOf(o: StoredAdminOrder): FulfillmentStatus {
   if (o.cancelled) return "cancelled";
   if (o.delivered) return "delivered";
   return o.fulfillment ?? "pending";
+}
+
+// Estimated profit = amount after discount minus what we pay the house.
+// Delivery fee is left out (it goes to the courier). Null when a cost is missing.
+function profitOf(o: StoredOrder): number | null {
+  if (!o.lines.every((line) => typeof line.cost === "number")) return null;
+  const cost = o.lines.reduce((sum, line) => sum + (line.cost as number) * line.qty, 0);
+  return o.subtotal - (o.discount ?? 0) - cost;
 }
 
 async function requireAdmin(): Promise<void> {
@@ -70,6 +82,9 @@ export const getDashboardStats = createServerFn({ method: "GET" }).handler(async
   let awaitingPayment = 0;
   let todaySales = 0;
   let monthSales = 0;
+  let todayProfit = 0;
+  let monthProfit = 0;
+  let unknownProfitOrders = 0;
   for (const o of all) {
     if (bdDay(o.createdAt) === today) todayNew += 1;
     if (!o.paid && !o.cancelled) awaitingPayment += 1;
@@ -78,11 +93,29 @@ export const getDashboardStats = createServerFn({ method: "GET" }).handler(async
     }
     if (o.paid && !o.cancelled) {
       const paidDay = bdDay(o.paidAt ?? o.createdAt);
-      if (paidDay === today) todaySales += o.total;
-      if (paidDay.slice(0, 7) === month) monthSales += o.total;
+      const profit = profitOf(o);
+      if (profit === null) unknownProfitOrders += 1;
+      if (paidDay === today) {
+        todaySales += o.total;
+        if (profit !== null) todayProfit += profit;
+      }
+      if (paidDay.slice(0, 7) === month) {
+        monthSales += o.total;
+        if (profit !== null) monthProfit += profit;
+      }
     }
   }
-  return { todayNew, totalOrders: all.length, pending, awaitingPayment, todaySales, monthSales };
+  return {
+    todayNew,
+    totalOrders: all.length,
+    pending,
+    awaitingPayment,
+    todaySales,
+    monthSales,
+    todayProfit,
+    monthProfit,
+    unknownProfitOrders,
+  };
 });
 
 // Admin: change the fulfillment status, tracking number and internal note of an order.
