@@ -1,22 +1,24 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { taka } from "@/lib/catalog";
-import { listAdminOrders } from "@/lib/orders";
+import { listAllAdminOrders } from "@/lib/orders";
 
 export const Route = createFileRoute("/admin-payments")({
   head: () => ({ meta: [{ title: "Payments — Raya Mart admin" }] }),
-  loader: async () => ({ orders: await listAdminOrders() }),
+  loader: async () => ({ orders: await listAllAdminOrders() }),
   component: AdminPayments,
 });
 
 function AdminPayments() {
   const { orders } = Route.useLoaderData();
-  const rows = orders.filter((o) => o.customer.pay === "bkash" || o.customer.pay === "nagad");
+  const rows = orders.filter(
+    (o) => o.customer.pay === "bkash" || o.customer.pay === "nagad" || o.customer.pay === "cod",
+  );
   const paidCount = rows.filter((o) => o.paid).length;
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-10 sm:px-6">
       <p className="text-xs tracking-widest text-mute uppercase">Admin</p>
-      <h1 className="mt-2 font-serif text-4xl">bKash / Nagad payments</h1>
+      <h1 className="mt-2 font-serif text-4xl">bKash / Nagad / COD payments</h1>
       <p className="mt-2 text-sm text-ink-soft">
         {paidCount} paid · {rows.length - paidCount} waiting
       </p>
@@ -28,7 +30,7 @@ function AdminPayments() {
               <th className="py-3 pr-4">Order</th>
               <th className="py-3 pr-4">Customer</th>
               <th className="py-3 pr-4">Method</th>
-              <th className="py-3 pr-4">Amount</th>
+              <th className="py-3 pr-4">Amount due</th>
               <th className="py-3 pr-4">TrxID</th>
               <th className="py-3">Status</th>
             </tr>
@@ -43,16 +45,24 @@ function AdminPayments() {
                   <span className="text-mute">{o.customer.phone}</span>
                 </td>
                 <td className="py-3 pr-4">{o.customer.pay}</td>
-                <td className="py-3 pr-4 tabular-nums">{taka(o.total)}</td>
+                <td className="py-3 pr-4 tabular-nums">
+                  {taka(o.customer.pay === "cod" ? o.advanceDue : o.total)}
+                </td>
                 <td className="py-3 pr-4 font-mono text-xs">{o.paidTrx ?? "—"}</td>
                 <td className="py-3">
-                  {o.paid ? <span className="text-pine">Paid</span> : <span className="text-brick">Waiting</span>}
+                  {o.paid ? (
+                    <span className="inline-flex items-center gap-1 font-medium text-blue-600">
+                      <span aria-hidden>✔</span> Paid
+                    </span>
+                  ) : (
+                    <span className="text-brick">Waiting</span>
+                  )}
                 </td>
               </tr>
             ))}
           </tbody>
         </table>
-        {rows.length === 0 ? <p className="mt-6 text-sm text-mute">এখনো কোনো bKash/Nagad অর্ডার নেই।</p> : null}
+        {rows.length === 0 ? <p className="mt-6 text-sm text-mute">এখনো কোনো অর্ডার নেই।</p> : null}
       </div>
     </div>
   );
