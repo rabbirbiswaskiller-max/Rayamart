@@ -4,6 +4,10 @@ import { authClient, signOut } from "@/lib/auth/client";
 import { getMyAccount, saveMyPhone, type AccountOrder, type AccountOrderStatus } from "@/lib/customers";
 import { payMethods, taka } from "@/lib/catalog";
 
+// The admin dashboard lives on its own deployment.
+const ADMIN_SITE = "https://rayamart-admin.vercel.app";
+const adminOnly = import.meta.env.VITE_ADMIN_ONLY === "1";
+
 export const Route = createFileRoute("/account")({
   loader: () => getMyAccount(),
   component: AccountPage,
@@ -19,7 +23,11 @@ function AccountPage() {
 function AdminRedirect() {
   const navigate = useNavigate();
   useEffect(() => {
-    navigate({ to: "/admin-customers" });
+    if (adminOnly) {
+      navigate({ to: "/admin-customers" });
+    } else {
+      window.location.href = `${ADMIN_SITE}/admin-customers`;
+    }
   }, [navigate]);
   return <main className="mx-auto max-w-md px-4 py-16 text-sm text-mute">অ্যাডমিন ড্যাশবোর্ডে নিয়ে যাওয়া হচ্ছে…</main>;
 }
