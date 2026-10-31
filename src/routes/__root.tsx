@@ -1,10 +1,19 @@
-import { createRootRoute, HeadContent, Outlet, Scripts } from "@tanstack/react-router";
+import { createRootRoute, HeadContent, Outlet, redirect, Scripts } from "@tanstack/react-router";
 import { AuthProvider } from "@/lib/auth/provider";
 import { Shell } from "@/components/shell";
 import { useRefCapture } from "@/lib/referral";
 import appCss from "../styles.css?url";
 
+// Set VITE_ADMIN_ONLY=1 in the admin deployment to hide the storefront there.
+const adminOnly = import.meta.env.VITE_ADMIN_ONLY === "1";
+
 export const Route = createRootRoute({
+  beforeLoad: ({ location }) => {
+    if (!adminOnly) return;
+    const p = location.pathname;
+    const allowed = p === "/account" || p.startsWith("/admin-") || p.startsWith("/manage-store");
+    if (!allowed) throw redirect({ to: "/account" });
+  },
   head: () => ({
     meta: [
       { charSet: "utf-8" },
