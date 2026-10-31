@@ -53,6 +53,9 @@ export function Shell({ children }: { children: ReactNode }) {
             <Link to="/track" className="hover:text-pine">
               Track
             </Link>
+            <Link to="/partner" className="hover:text-pine">
+              Partner
+            </Link>
           </nav>
           <div className="ml-auto hidden min-w-0 flex-1 justify-end md:flex">
             <SearchForm className="w-full max-w-xs" />
@@ -130,6 +133,9 @@ export function Shell({ children }: { children: ReactNode }) {
             </MobileLink>
             <MobileLink to="/track" onClick={() => setOpen(false)}>
               Track an order
+            </MobileLink>
+            <MobileLink to="/partner" onClick={() => setOpen(false)}>
+              Become a partner
             </MobileLink>
             <MobileLink to="/bag" onClick={() => setOpen(false)}>
               Bag
@@ -225,7 +231,7 @@ function MobileLink({
 }: {
   children: ReactNode;
   onClick: () => void;
-  to: "/" | "/shop" | "/house" | "/track" | "/bag" | "/manage-store";
+  to: "/" | "/shop" | "/house" | "/track" | "/partner" | "/bag" | "/manage-store";
   search?: ShopQuery;
 }) {
   if (to === "/shop") {
@@ -272,6 +278,9 @@ function Footer() {
               <Link to="/track">Track an order</Link>
             </li>
             <li>
+              <Link to="/partner">Become a partner</Link>
+            </li>
+            <li>
               <Link to="/bag">Your bag</Link>
             </li>
           </ul>
@@ -293,7 +302,7 @@ function Footer() {
       <div className="border-t border-line">
         <div className="mx-auto flex max-w-6xl flex-col gap-2 px-4 py-5 text-xs text-mute sm:flex-row sm:justify-between sm:px-6">
           <p>Dhaka desk · Sat–Thu, 10–7</p>
-          <p>bKash · Nagad · Card · Cash on delivery</p>
+          <p>bKash · Nagad · Cash on delivery</p>
         </div>
       </div>
     </footer>

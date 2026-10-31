@@ -2,10 +2,14 @@ import { useState } from "react";
 import { createFileRoute, useRouter } from "@tanstack/react-router";
 import { taka } from "@/lib/catalog";
 import { listPartnerReport, setOrderStatus, type CommissionState } from "@/lib/orders";
+import { listPartnerApplications, reviewPartner, type PartnerRecord } from "@/lib/partners";
 
 export const Route = createFileRoute("/admin-partners")({
   head: () => ({ meta: [{ title: "Partners — Raya Mart admin" }] }),
-  loader: async () => ({ report: await listPartnerReport() }),
+  loader: async () => ({
+    report: await listPartnerReport(),
+    applications: await listPartnerApplications(),
+  }),
   component: AdminPartners,
 });
 
@@ -26,7 +30,7 @@ const stateClass: Record<CommissionState, string> = {
 };
 
 function AdminPartners() {
-  const { report } = Route.useLoaderData();
+  const { report, applications } = Route.useLoaderData();
   const router = useRouter();
   const [busyId, setBusyId] = useState<string | null>(null);
   const [error, setError] = useState("");
@@ -53,7 +57,31 @@ function AdminPartners() {
         Cancelled orders lose their commission.
       </p>
 
-      <h2 className="mt-10 font-serif text-2xl">Partners</h2>
+      <h2 className="mt-10 font-serif text-2xl">Partner applications</h2>
+      {applications.length === 0 ? (
+        <p className="mt-3 text-sm text-mute">No applications yet.</p>
+      ) : (
+        <div className="mt-4 overflow-x-auto">
+          <table className="w-full text-left text-sm">
+            <thead className="border-b border-line text-xs tracking-widest text-mute uppercase">
+              <tr>
+                <th className="py-3 pr-4">Applicant</th>
+                <th className="py-3 pr-4">Page / link</th>
+                <th className="py-3 pr-4">Audience</th>
+                <th className="py-3 pr-4">Status</th>
+                <th className="py-3">Decision</th>
+              </tr>
+            </thead>
+            <tbody>
+              {applications.map((app) => (
+                <ApplicationRow key={app.id} app={app} />
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      <h2 className="mt-12 font-serif text-2xl">Partners</h2>
       {report.partners.length === 0 ? (
         <p className="mt-3 text-sm text-mute">No partner orders yet.</p>
       ) : (
@@ -167,5 +195,69 @@ function AdminPartners() {
         {report.orders.length === 0 ? <p className="mt-6 text-sm text-mute">No orders yet.</p> : null}
       </div>
     </div>
+  );
+}
+
+function ApplicationRow({ app }: { app: PartnerRecord }) {
+  const router = useRouter();
+  const [code, setCode] = useState(app.code ?? "");
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState("");
+
+  async function review(action: "approve" | "reject") {
+    setErr("");
+    setBusy(true);
+    try {
+      await reviewPartner({ data: { id: app.id, action, code } });
+      await router.invalidate();
+    } catch (e) {
+      setErr(e instanceof Error ? e.message : "Could not save.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <tr className="border-b border-line align-top">
+      <td className="py-3 pr-4">
+        {app.name}
+        <br />
+        <span className="text-mute">{app.phone}</span>
+      </td>
+      <td className="py-3 pr-4 break-all text-xs">{app.handle}</td>
+      <td className="py-3 pr-4 text-xs">{app.audience || "—"}</td>
+      <td className="py-3 pr-4 text-xs">{app.status}</td>
+      <td className="py-3">
+        {app.status === "approved" ? (
+          <span className="font-mono text-xs">code: {app.code}</span>
+        ) : (
+          <div className="flex flex-wrap gap-2">
+            <input
+              value={code}
+              onChange={(e) => setCode(e.target.value)}
+              placeholder="code e.g. rahim"
+              className="h-8 w-32 border border-line px-2 text-xs"
+            />
+            <button
+              type="button"
+              disabled={busy}
+              onClick={() => review("approve")}
+              className="border border-ink px-3 py-1 text-xs disabled:opacity-40"
+            >
+              Approve
+            </button>
+            <button
+              type="button"
+              disabled={busy}
+              onClick={() => review("reject")}
+              className="border border-line px-3 py-1 text-xs text-brick disabled:opacity-40"
+            >
+              Reject
+            </button>
+          </div>
+        )}
+        {err ? <p className="mt-1 text-xs text-brick">{err}</p> : null}
+      </td>
+    </tr>
   );
 }
