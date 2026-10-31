@@ -14,7 +14,8 @@ import { listStoreProducts } from "@/lib/admin/products";
 
 export const Route = createFileRoute("/product/$slug")({
   loader: async ({ params }) => {
-    const products = await listStoreProducts();
+    // Inactive pieces are not shown, so they 404 like a missing product.
+    const products = (await listStoreProducts()).filter((item) => item.active !== false);
     const product = products.find((item) => item.slug === params.slug);
     if (!product) throw notFound();
     return { product, products };

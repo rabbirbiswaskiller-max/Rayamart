@@ -6,7 +6,7 @@ import { DealClock } from "@/components/commerce";
 import { ProductCard } from "@/components/product-card";
 
 export const Route = createFileRoute("/")({
-  loader: () => listStoreProducts(),
+  loader: async () => (await listStoreProducts()).filter((p) => p.active !== false),
   component: Home,
 });
 

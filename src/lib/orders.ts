@@ -10,7 +10,8 @@ type Customer = {
   pay: PayMethod;
   note: string;
 };
-type OrderLine = { slug: string; name: string; qty: number; price: number; image: string };
+// cost = what we paid the house for this line, copied at order time.
+type OrderLine = { slug: string; name: string; qty: number; price: number; image: string; cost?: number };
 export type StoredOrder = {
   id: string;
   createdAt: string;
@@ -73,7 +74,15 @@ export const createCustomerOrder = createServerFn({ method: "POST" })
       const rows = await sql.query<{ data: Product }>("SELECT data FROM raya_products WHERE slug = $1 LIMIT 1", [item.slug]);
       const product = rows[0]?.data;
       if (!product) throw new Error("একটি প্রোডাক্ট আর পাওয়া যাচ্ছে না। পেজ রিফ্রেশ করে আবার চেষ্টা করো।");
-      lines.push({ slug: product.slug, name: product.name, qty: item.qty, price: Number(product.price), image: product.image });
+      if (product.active === false) throw new Error("একটি প্রোডাক্ট এখন পাওয়া যাচ্ছে না। কার্ট থেকে সরিয়ে আবার চেষ্টা করো।");
+      lines.push({
+        slug: product.slug,
+        name: product.name,
+        qty: item.qty,
+        price: Number(product.price),
+        image: product.image,
+        cost: typeof product.cost === "number" ? product.cost : undefined,
+      });
     }
     if (customer.pay === "cod") {
       const products = await Promise.all(lines.map(async (line) => {

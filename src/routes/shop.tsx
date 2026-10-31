@@ -11,7 +11,7 @@ import { ProductCard } from "@/components/product-card";
 import { listStoreProducts } from "@/lib/admin/products";
 
 export const Route = createFileRoute("/shop")({
-  loader: () => listStoreProducts(),
+  loader: async () => (await listStoreProducts()).filter((p) => p.active !== false),
   validateSearch: (search: Record<string, unknown>): ShopQuery => {
     const out: ShopQuery = {};
     if (typeof search.q === "string" && search.q.trim()) out.q = search.q.trim();
