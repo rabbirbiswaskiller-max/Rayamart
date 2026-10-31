@@ -1,6 +1,7 @@
 import { Link } from "@tanstack/react-router";
 
 const links = [
+  { to: "/manage-store", label: "Products" },
   { to: "/admin-customers", label: "Customers" },
   { to: "/admin-partners", label: "Partners" },
   { to: "/admin-withdrawals", label: "Withdrawals" },
