@@ -85,8 +85,10 @@ export const getCustomerOrder = createServerFn({ method: "GET" })
     return rows[0]?.data ?? null;
   });
 
-// Customer submits the bKash/Nagad TrxID. The server asks the Apps Script
-// (which checks the SMS log) whether that TrxID arrived with the exact order total.
+// Customer submits the TrxID. For bKash/Nagad the full total is checked; for
+// cash on delivery only the advance delivery fee is checked. The server asks
+// the Apps Script (which checks the SMS log) whether that TrxID arrived with
+// the exact amount.
 export const submitPaymentTrx = createServerFn({ method: "POST" })
   .inputValidator((data: { id: string; trx: string }) => data)
   .handler(async ({ data }): Promise<{ ok: boolean; message: string }> => {
@@ -99,9 +101,11 @@ export const submitPaymentTrx = createServerFn({ method: "POST" })
     const order = rows[0]?.data;
     if (!order) return { ok: false, message: "Order not found." };
     if (order.paid) return { ok: true, message: "Payment already confirmed." };
-    if (order.customer.pay !== "bkash" && order.customer.pay !== "nagad") {
-      return { ok: false, message: "This order is not paid by bKash or Nagad." };
+    const method = order.customer.pay;
+    if (method !== "bkash" && method !== "nagad" && method !== "cod") {
+      return { ok: false, message: "This order is not paid by bKash, Nagad or cash on delivery." };
     }
+    const amountDue = method === "cod" ? order.advanceDue : order.total;
 
     const base = process.env.APPS_SCRIPT_URL;
     const secret = process.env.APPS_SCRIPT_SECRET;
@@ -110,7 +114,7 @@ export const submitPaymentTrx = createServerFn({ method: "POST" })
     const url = new URL(base);
     url.searchParams.set("key", secret);
     url.searchParams.set("trx", trx);
-    url.searchParams.set("amount", String(order.total));
+    url.searchParams.set("amount", String(amountDue));
     url.searchParams.set("orderId", order.id);
 
     const res = await fetch(url.toString());
@@ -119,7 +123,7 @@ export const submitPaymentTrx = createServerFn({ method: "POST" })
       const messages: Record<string, string> = {
         not_found: "We cannot see this TrxID yet. Wait a minute and try again.",
         already_used: "This TrxID was already used for another order.",
-        amount_mismatch: `The amount does not match. Please send exactly ৳${order.total}.`,
+        amount_mismatch: `The amount does not match. Please send exactly ৳${amountDue}.`,
       };
       return { ok: false, message: messages[result.error ?? ""] ?? "Could not verify the payment. Please try again." };
     }
@@ -131,15 +135,31 @@ export const submitPaymentTrx = createServerFn({ method: "POST" })
     return { ok: true, message: "Payment confirmed. Thank you." };
   });
 
+async function requireAdmin(): Promise<void> {
+  const { getSessionUser } = await import("@/lib/auth/verify.server");
+  const user = await getSessionUser();
+  const allowedEmail = process.env.RAYA_ADMIN_EMAIL?.trim().toLowerCase();
+  if (!user?.email || !allowedEmail || user.email.trim().toLowerCase() !== allowedEmail) {
+    throw new Error("Admin access required");
+  }
+}
+
+async function allOrders(): Promise<StoredOrder[]> {
+  const sql = await getSql();
+  const rows = await sql.query<{ data: StoredOrder }>("SELECT data FROM raya_orders ORDER BY created_at DESC LIMIT 500");
+  return rows.map((row) => row.data);
+}
+
+// Dashboard: only orders whose payment is confirmed.
 export const listAdminOrders = createServerFn({ method: "GET" })
   .handler(async (): Promise<StoredOrder[]> => {
-    const { getSessionUser } = await import("@/lib/auth/verify.server");
-    const user = await getSessionUser();
-    const allowedEmail = process.env.RAYA_ADMIN_EMAIL?.trim().toLowerCase();
-    if (!user?.email || !allowedEmail || user.email.trim().toLowerCase() !== allowedEmail) {
-      throw new Error("Admin access required");
-    }
-    const sql = await getSql();
-    const rows = await sql.query<{ data: StoredOrder }>("SELECT data FROM raya_orders ORDER BY created_at DESC LIMIT 500");
-    return rows.map((row) => row.data);
+    await requireAdmin();
+    return (await allOrders()).filter((order) => order.paid === true);
+  });
+
+// Payments page: every order, paid or waiting.
+export const listAllAdminOrders = createServerFn({ method: "GET" })
+  .handler(async (): Promise<StoredOrder[]> => {
+    await requireAdmin();
+    return allOrders();
   });
