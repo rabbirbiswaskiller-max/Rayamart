@@ -302,7 +302,7 @@ function Footer() {
       <div className="border-t border-line">
         <div className="mx-auto flex max-w-6xl flex-col gap-2 px-4 py-5 text-xs text-mute sm:flex-row sm:justify-between sm:px-6">
           <p>Dhaka desk · Sat–Thu, 10–7</p>
-          <p>bKash · Nagad · Card · Cash on delivery</p>
+          <p>bKash · Nagad · Cash on delivery</p>
         </div>
       </div>
     </footer>
