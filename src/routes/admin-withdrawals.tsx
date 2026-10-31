@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { createFileRoute, useRouter } from "@tanstack/react-router";
+import { AdminNav } from "@/components/admin-nav";
 import { taka } from "@/lib/catalog";
 import { listWithdrawals, reviewWithdrawal, type WithdrawalRow } from "@/lib/partner-dashboard";
 
@@ -24,6 +25,7 @@ function AdminWithdrawals() {
       <p className="text-xs tracking-widest text-mute uppercase">Admin</p>
       <h1 className="mt-2 font-serif text-4xl">টাকা তোলার অনুরোধ</h1>
       <p className="mt-2 text-sm text-ink-soft">{pendingCount} টি অনুরোধ অপেক্ষায় আছে।</p>
+      <AdminNav />
 
       {rows.length === 0 ? (
         <p className="mt-8 text-sm text-mute">এখনো কোনো অনুরোধ নেই।</p>

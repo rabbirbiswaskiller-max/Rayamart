@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { createFileRoute, useRouter } from "@tanstack/react-router";
+import { AdminNav } from "@/components/admin-nav";
 import { taka } from "@/lib/catalog";
 import { listPartnerReport, setOrderStatus, type CommissionState } from "@/lib/orders";
 import { listPartnerApplications, reviewPartner, type PartnerRecord } from "@/lib/partners";
@@ -56,6 +57,7 @@ function AdminPartners() {
         Commission is 10% of the product amount after discount. It becomes approved only when the order is paid and marked delivered.
         Cancelled orders lose their commission.
       </p>
+      <AdminNav />
 
       <h2 className="mt-10 font-serif text-2xl">Partner applications</h2>
       {applications.length === 0 ? (
