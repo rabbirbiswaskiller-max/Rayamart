@@ -117,7 +117,7 @@ export const categories: Category[] = [
     slug: "mens-fashion",
     name: "Men’s Fashion",
     line: "Everyday style, made easy",
-    image: "/media/arrival.jpg",
+    image: "/media/IMG_91860096-f9a1-468a-a06e-b5123603db78.jpg",
   },
 ];
 
