@@ -24,9 +24,9 @@ function AdminRedirect() {
   const navigate = useNavigate();
   useEffect(() => {
     if (adminOnly) {
-      navigate({ to: "/admin-customers" });
+      navigate({ to: "/admin-dashboard" });
     } else {
-      window.location.href = `${ADMIN_SITE}/admin-customers`;
+      window.location.href = `${ADMIN_SITE}/admin-dashboard`;
     }
   }, [navigate]);
   return <main className="mx-auto max-w-md px-4 py-16 text-sm text-mute">অ্যাডমিন ড্যাশবোর্ডে নিয়ে যাওয়া হচ্ছে…</main>;
