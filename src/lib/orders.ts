@@ -25,15 +25,22 @@ export type StoredOrder = {
   paid?: boolean;
   paidTrx?: string;
   paidAt?: string;
+  delivered?: boolean;
+  deliveredAt?: string;
+  cancelled?: boolean;
+  // Partner (affiliate) code from the ?ref= link the customer came through.
+  ref?: string;
 };
 
 const SHIP_FEE = 120;
 const DISCOUNT_OVER = 3000;
 const DISCOUNT_RATE = 0.03;
+const PARTNER_RATE = 0.1;
+const REF_PATTERN = /^[a-z0-9-]{2,40}$/;
 const validPays = new Set<PayMethod>(["bkash", "nagad", "card", "cod"]);
 
 export const createCustomerOrder = createServerFn({ method: "POST" })
-  .inputValidator((data: { customer: Customer; items: { slug: string; qty: number }[] }) => data)
+  .inputValidator((data: { customer: Customer; items: { slug: string; qty: number }[]; ref?: string }) => data)
   .handler(async ({ data }): Promise<{ id: string }> => {
     const customer = data.customer;
     if (!customer || customer.name.trim().length < 2) throw new Error("নাম সঠিকভাবে লিখো।");
@@ -66,11 +73,13 @@ export const createCustomerOrder = createServerFn({ method: "POST" })
     const discount = !isCOD && subtotal >= DISCOUNT_OVER ? Math.round(subtotal * DISCOUNT_RATE) : 0;
     const shipping = isCOD ? SHIP_FEE : 0;
     const id = `RM-${crypto.randomUUID().replace(/-/g, "").toUpperCase()}`;
+    const ref = typeof data.ref === "string" ? data.ref.trim().toLowerCase() : "";
     const order: StoredOrder = {
       id, createdAt: new Date().toISOString(), lines, subtotal, discount, shipping,
       total: subtotal - discount + shipping, advanceDue: isCOD ? SHIP_FEE : 0,
       dueOnDelivery: isCOD ? subtotal : 0,
       customer: { ...customer, name: customer.name.trim(), phone, address: customer.address.trim(), note: (customer.note ?? "").trim() },
+      ...(REF_PATTERN.test(ref) ? { ref } : {}),
     };
     await sql.query("INSERT INTO raya_orders (id, data, created_at, updated_at) VALUES ($1, $2::jsonb, now(), now())", [id, JSON.stringify(order)]);
     return { id };
@@ -162,4 +171,145 @@ export const listAllAdminOrders = createServerFn({ method: "GET" })
   .handler(async (): Promise<StoredOrder[]> => {
     await requireAdmin();
     return allOrders();
+  });
+
+export type CustomerOrderStatus = "unpaid" | "paid" | "delivered" | "cancelled";
+
+// Public tracking: needs the order number AND the mobile used at checkout.
+// Returns only what the customer should see, never the address or TrxID.
+export const trackOrder = createServerFn({ method: "POST" })
+  .inputValidator((data: { id: string; phone: string }) => data)
+  .handler(async ({ data }): Promise<
+    | { found: false }
+    | {
+        found: true;
+        id: string;
+        createdAt: string;
+        total: number;
+        advanceDue: number;
+        pay: PayMethod;
+        city: string;
+        items: string[];
+        status: CustomerOrderStatus;
+      }
+  > => {
+    const id = String(data.id || "").trim().toUpperCase();
+    const phone = String(data.phone || "").replace(/\s/g, "");
+    if (!/^RM-[A-F0-9]{32}$/.test(id) || !/^01\d{9}$/.test(phone)) return { found: false };
+    const sql = await getSql();
+    const rows = await sql.query<{ data: StoredOrder }>("SELECT data FROM raya_orders WHERE id = $1 LIMIT 1", [id]);
+    const order = rows[0]?.data;
+    if (!order || order.customer.phone !== phone) return { found: false };
+    const status: CustomerOrderStatus = order.cancelled
+      ? "cancelled"
+      : order.delivered
+        ? "delivered"
+        : order.paid
+          ? "paid"
+          : "unpaid";
+    return {
+      found: true,
+      id: order.id,
+      createdAt: order.createdAt,
+      total: order.total,
+      advanceDue: order.advanceDue ?? 0,
+      pay: order.customer.pay,
+      city: order.customer.city,
+      items: order.lines.map((line) => `${line.name} × ${line.qty}`),
+      status,
+    };
+  });
+
+// Admin: mark an order delivered, cancelled, or open again.
+export const setOrderStatus = createServerFn({ method: "POST" })
+  .inputValidator((data: { id: string; status: "open" | "delivered" | "cancelled" }) => data)
+  .handler(async ({ data }): Promise<{ ok: boolean }> => {
+    await requireAdmin();
+    if (!/^RM-[A-F0-9]{32}$/.test(data.id)) throw new Error("Order not found.");
+    if (!["open", "delivered", "cancelled"].includes(data.status)) throw new Error("Invalid status.");
+    const sql = await getSql();
+    const patch = {
+      delivered: data.status === "delivered",
+      deliveredAt: data.status === "delivered" ? new Date().toISOString() : null,
+      cancelled: data.status === "cancelled",
+    };
+    await sql.query(
+      "UPDATE raya_orders SET data = data || $2::jsonb, updated_at = now() WHERE id = $1",
+      [data.id, JSON.stringify(patch)],
+    );
+    return { ok: true };
+  });
+
+export type CommissionState = "none" | "unpaid" | "pending" | "approved" | "cancelled";
+
+export type PartnerOrderRow = {
+  id: string;
+  createdAt: string;
+  ref: string | null;
+  customerName: string;
+  phone: string;
+  pay: PayMethod;
+  total: number;
+  paid: boolean;
+  paidTrx: string | null;
+  status: "open" | "delivered" | "cancelled";
+  commission: number;
+  commissionState: CommissionState;
+};
+
+export type PartnerSummary = {
+  ref: string;
+  orders: number;
+  paid: number;
+  pending: number;
+  approved: number;
+  cancelled: number;
+};
+
+// Commission = 10% of the product amount after discount (delivery fee excluded).
+// It is pending once the payment is confirmed and approved only after delivery.
+function commissionFor(order: StoredOrder): { commission: number; state: CommissionState } {
+  if (!order.ref) return { commission: 0, state: "none" };
+  const commission = Math.round((order.subtotal - (order.discount ?? 0)) * PARTNER_RATE);
+  if (order.cancelled) return { commission, state: "cancelled" };
+  if (!order.paid) return { commission, state: "unpaid" };
+  if (order.delivered) return { commission, state: "approved" };
+  return { commission, state: "pending" };
+}
+
+export const listPartnerReport = createServerFn({ method: "GET" })
+  .handler(async (): Promise<{ orders: PartnerOrderRow[]; partners: PartnerSummary[] }> => {
+    await requireAdmin();
+    const all = await allOrders();
+    const relevant = all.filter((order) => order.ref || order.paid);
+    const orders: PartnerOrderRow[] = relevant.map((order) => {
+      const { commission, state } = commissionFor(order);
+      return {
+        id: order.id,
+        createdAt: order.createdAt,
+        ref: order.ref ?? null,
+        customerName: order.customer.name,
+        phone: order.customer.phone,
+        pay: order.customer.pay,
+        total: order.total,
+        paid: order.paid === true,
+        paidTrx: order.paidTrx ?? null,
+        status: order.cancelled ? "cancelled" : order.delivered ? "delivered" : "open",
+        commission,
+        commissionState: state,
+      };
+    });
+
+    const byRef = new Map<string, PartnerSummary>();
+    for (const row of orders) {
+      if (!row.ref) continue;
+      const entry = byRef.get(row.ref) ?? { ref: row.ref, orders: 0, paid: 0, pending: 0, approved: 0, cancelled: 0 };
+      entry.orders += 1;
+      if (row.paid) entry.paid += 1;
+      if (row.commissionState === "pending") entry.pending += row.commission;
+      if (row.commissionState === "approved") entry.approved += row.commission;
+      if (row.commissionState === "cancelled") entry.cancelled += 1;
+      byRef.set(row.ref, entry);
+    }
+    return { orders, partners: [...byRef.values()].sort((a, b) => b.approved - a.approved) };
   });
