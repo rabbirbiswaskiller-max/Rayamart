@@ -1,7 +1,7 @@
 import { useState } from "react";
-import { createFileRoute, Link, notFound } from "@tanstack/react-router";
+import { createFileRoute, Link, notFound, useNavigate } from "@tanstack/react-router";
 import { toast } from "sonner";
-import { BadgeCheck, Truck } from "lucide-react";
+import { BadgeCheck, Heart, Truck } from "lucide-react";
 import {
   categoryBy,
   houseBy,
@@ -11,14 +11,16 @@ import { useCart } from "@/lib/store";
 import { Price, Qty, Stars } from "@/components/commerce";
 import { ProductCard } from "@/components/product-card";
 import { listStoreProducts } from "@/lib/admin/products";
+import { getWishlistSlugs, toggleWishlist } from "@/lib/wishlist";
 
 export const Route = createFileRoute("/product/$slug")({
   loader: async ({ params }) => {
     // Inactive pieces are not shown, so they 404 like a missing product.
-    const products = (await listStoreProducts()).filter((item) => item.active !== false);
+    const [all, wishlist] = await Promise.all([listStoreProducts(), getWishlistSlugs()]);
+    const products = all.filter((item) => item.active !== false);
     const product = products.find((item) => item.slug === params.slug);
     if (!product) throw notFound();
-    return { product, products };
+    return { product, products, wishlist };
   },
   head: ({ loaderData }) => ({
     meta: loaderData?.product
@@ -30,12 +32,34 @@ export const Route = createFileRoute("/product/$slug")({
 });
 
 function ProductPage() {
-  const { product, products } = Route.useLoaderData();
+  const { product, products, wishlist } = Route.useLoaderData();
   const house = houseBy(product.house);
   const category = categoryBy(product.category);
   const add = useCart((s) => s.add);
+  const navigate = useNavigate();
   const [qty, setQty] = useState(1);
+  const [saved, setSaved] = useState(wishlist.slugs.includes(product.slug));
+  const [wishBusy, setWishBusy] = useState(false);
   const related = relatedTo(product.slug, products);
+
+  async function toggleSaved() {
+    if (!wishlist.signedIn) {
+      toast("Log in to save pieces.", {
+        action: { label: "Log in", onClick: () => navigate({ to: "/account" }) },
+      });
+      return;
+    }
+    setWishBusy(true);
+    try {
+      await toggleWishlist({ data: { slug: product.slug, on: !saved } });
+      setSaved(!saved);
+      toast(saved ? "Removed from your saved pieces." : "Saved to your account.");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Could not save. Please try again.");
+    } finally {
+      setWishBusy(false);
+    }
+  }
 
   return (
     <div>
@@ -79,6 +103,16 @@ function ProductPage() {
               }}
             >
               Add to bag
+            </button>
+            <button
+              type="button"
+              disabled={wishBusy}
+              aria-pressed={saved}
+              onClick={toggleSaved}
+              className="inline-flex h-12 items-center gap-2 border border-ink px-4 text-sm hover:bg-ink hover:text-ivory disabled:opacity-60"
+            >
+              <Heart className={`size-4 ${saved ? "fill-current" : ""}`} />
+              {saved ? "Saved" : "Save"}
             </button>
           </div>
           <p className="mt-4 flex items-center gap-2 text-xs text-mute">
