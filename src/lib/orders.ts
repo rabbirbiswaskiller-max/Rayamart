@@ -28,6 +28,7 @@ export type StoredOrder = {
   delivered?: boolean;
   deliveredAt?: string;
   cancelled?: boolean;
+  expired?: boolean;
   // Partner (affiliate) code from the ?ref= link the customer came through.
   ref?: string;
 };
@@ -38,6 +39,19 @@ const DISCOUNT_RATE = 0.03;
 const PARTNER_RATE = 0.1;
 const REF_PATTERN = /^[a-z0-9-]{2,40}$/;
 const validPays = new Set<PayMethod>(["bkash", "nagad", "card", "cod"]);
+
+// Unpaid orders older than 24 hours are cancelled automatically. It runs on the
+// paths that read orders, so no separate cron job is needed.
+export async function expireStaleOrders(): Promise<void> {
+  const sql = await getSql();
+  await sql.query(
+    `UPDATE raya_orders
+       SET data = data || '{"cancelled": true, "expired": true}'::jsonb, updated_at = now()
+     WHERE created_at < now() - interval '24 hours'
+       AND COALESCE(data->>'paid', '') <> 'true'
+       AND COALESCE(data->>'cancelled', '') <> 'true'`,
+  );
+}
 
 export const createCustomerOrder = createServerFn({ method: "POST" })
   .inputValidator((data: { customer: Customer; items: { slug: string; qty: number }[]; ref?: string }) => data)
@@ -89,6 +103,7 @@ export const getCustomerOrder = createServerFn({ method: "GET" })
   .inputValidator((data: { id: string }) => data)
   .handler(async ({ data }): Promise<StoredOrder | null> => {
     if (!/^RM-[A-F0-9]{32}$/.test(data.id)) return null;
+    await expireStaleOrders();
     const sql = await getSql();
     const rows = await sql.query<{ data: StoredOrder }>("SELECT data FROM raya_orders WHERE id = $1 LIMIT 1", [data.id]);
     return rows[0]?.data ?? null;
@@ -105,11 +120,15 @@ export const submitPaymentTrx = createServerFn({ method: "POST" })
     const trx = String(data.trx || "").trim().toUpperCase();
     if (!/^[A-Z0-9]{6,20}$/.test(trx)) return { ok: false, message: "Enter a valid TrxID." };
 
+    await expireStaleOrders();
     const sql = await getSql();
     const rows = await sql.query<{ data: StoredOrder }>("SELECT data FROM raya_orders WHERE id = $1 LIMIT 1", [data.id]);
     const order = rows[0]?.data;
     if (!order) return { ok: false, message: "Order not found." };
     if (order.paid) return { ok: true, message: "Payment already confirmed." };
+    if (order.cancelled) {
+      return { ok: false, message: "এই অর্ডারের ২৪ ঘণ্টার সময়সীমা শেষ হয়েছে। নতুন করে অর্ডার করো, অথবা আমাদের সাথে যোগাযোগ করো।" };
+    }
     const method = order.customer.pay;
     if (method !== "bkash" && method !== "nagad" && method !== "cod") {
       return { ok: false, message: "This order is not paid by bKash, Nagad or cash on delivery." };
@@ -154,6 +173,7 @@ async function requireAdmin(): Promise<void> {
 }
 
 async function allOrders(): Promise<StoredOrder[]> {
+  await expireStaleOrders();
   const sql = await getSql();
   const rows = await sql.query<{ data: StoredOrder }>("SELECT data FROM raya_orders ORDER BY created_at DESC LIMIT 500");
   return rows.map((row) => row.data);
@@ -196,6 +216,7 @@ export const trackOrder = createServerFn({ method: "POST" })
     const id = String(data.id || "").trim().toUpperCase();
     const phone = String(data.phone || "").replace(/\s/g, "");
     if (!/^RM-[A-F0-9]{32}$/.test(id) || !/^01\d{9}$/.test(phone)) return { found: false };
+    await expireStaleOrders();
     const sql = await getSql();
     const rows = await sql.query<{ data: StoredOrder }>("SELECT data FROM raya_orders WHERE id = $1 LIMIT 1", [id]);
     const order = rows[0]?.data;
