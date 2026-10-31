@@ -1,27 +1,53 @@
 import { useState, type FormEvent } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { taka } from "@/lib/catalog";
-import { useCart, type OrderRecord } from "@/lib/store";
+import { payMethods, taka } from "@/lib/catalog";
+import { trackOrder, type CustomerOrderStatus } from "@/lib/orders";
 
 export const Route = createFileRoute("/track")({
   head: () => ({ meta: [{ title: "Track — Raya Mart" }] }),
   component: TrackPage,
 });
 
-function TrackPage() {
-  const orders = useCart((s) => s.orders);
-  const [query, setQuery] = useState("");
-  const [hits, setHits] = useState<OrderRecord[] | null>(null);
+type TrackResult = Awaited<ReturnType<typeof trackOrder>>;
 
-  function onSubmit(e: FormEvent) {
+const statusCopy: Record<CustomerOrderStatus, { title: string; body: string }> = {
+  unpaid: {
+    title: "Waiting for payment",
+    body: "Send the payment to the number on your order page, then enter the TrxID there. We will update this page once it is confirmed.",
+  },
+  paid: {
+    title: "Payment confirmed",
+    body: "The desk will call you about the piece. This page updates when it is handed to the courier.",
+  },
+  delivered: {
+    title: "Delivered",
+    body: "The desk has marked this order as delivered. If anything is wrong, contact us on the number we called you from.",
+  },
+  cancelled: {
+    title: "Cancelled",
+    body: "This order has been cancelled. If you have a question, contact the desk.",
+  },
+};
+
+function TrackPage() {
+  const [orderId, setOrderId] = useState("");
+  const [phone, setPhone] = useState("");
+  const [result, setResult] = useState<TrackResult | null>(null);
+  const [error, setError] = useState("");
+  const [busy, setBusy] = useState(false);
+
+  async function onSubmit(e: FormEvent) {
     e.preventDefault();
-    const q = query.trim().toLowerCase();
-    const found = orders.filter(
-      (order) =>
-        order.id.toLowerCase() === q ||
-        order.customer.phone.replace(/\s/g, "").includes(q.replace(/\s/g, "")),
-    );
-    setHits(found);
+    setError("");
+    setResult(null);
+    setBusy(true);
+    try {
+      setResult(await trackOrder({ data: { id: orderId.trim(), phone: phone.trim() } }));
+    } catch {
+      setError("Could not look up the order right now. Please try again.");
+    } finally {
+      setBusy(false);
+    }
   }
 
   return (
@@ -29,55 +55,87 @@ function TrackPage() {
       <p className="text-xs tracking-widest text-mute uppercase">Track</p>
       <h1 className="mt-3 font-serif text-5xl">Where is it?</h1>
       <p className="mt-3 text-ink-soft">
-        Look up a request with the order number, or the mobile used at checkout. This device remembers orders placed here.
+        Enter the order number and the mobile number you used at checkout. You can check from any device.
       </p>
-      <form onSubmit={onSubmit} className="mt-8 flex flex-col gap-3 sm:flex-row">
-        <label className="flex-1 text-xs tracking-widest text-mute uppercase">
-          Order or mobile
+
+      <form onSubmit={onSubmit} className="mt-8 grid gap-4 sm:grid-cols-2">
+        <label className="block text-xs tracking-widest text-mute uppercase">
+          Order number
           <input
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
+            value={orderId}
+            onChange={(e) => setOrderId(e.target.value)}
             className="mt-2 h-12 w-full border border-line bg-ivory px-3 text-sm tracking-normal text-ink normal-case"
-            placeholder="RM-… or 01…"
+            placeholder="RM-…"
+            autoComplete="off"
           />
         </label>
-        <button type="submit" className="h-12 bg-pine px-6 text-sm text-ivory sm:mt-6">
-          Look up
+        <label className="block text-xs tracking-widest text-mute uppercase">
+          Mobile
+          <input
+            value={phone}
+            onChange={(e) => setPhone(e.target.value)}
+            inputMode="tel"
+            className="mt-2 h-12 w-full border border-line bg-ivory px-3 text-sm tracking-normal text-ink normal-case"
+            placeholder="01XXXXXXXXX"
+            autoComplete="tel"
+          />
+        </label>
+        <button
+          type="submit"
+          disabled={busy}
+          className="h-12 bg-pine px-6 text-sm text-ivory disabled:opacity-60 sm:col-span-2 sm:w-fit"
+        >
+          {busy ? "Checking…" : "Check status"}
         </button>
       </form>
 
-      {hits && hits.length === 0 ? (
+      {error ? <p role="alert" className="mt-6 text-sm text-brick">{error}</p> : null}
+
+      {result && !result.found ? (
         <p className="mt-8 text-ink-soft">
-          Nothing on this device matches. If you ordered from another phone, the desk still has the request — keep an eye on the number you left.
+          No order matches that number and mobile. Check both, or contact the desk.
         </p>
       ) : null}
 
-      <ul className="mt-8 space-y-4">
-        {(hits ?? orders).map((order) => (
-          <li key={order.id} className="border border-line bg-ivory p-5">
-            <div className="flex items-baseline justify-between gap-3">
-              <p className="font-serif text-2xl">{order.id}</p>
-              <p className="text-sm tabular-nums">{taka(order.total)}</p>
-            </div>
-            <p className="mt-1 text-sm text-mute">
-              {order.customer.city} · {order.lines.map((l) => l.name).join(", ")}
-            </p>
-            <p className="mt-3 text-sm text-ink-soft">
-              Status: with the desk. We confirm by phone, then hand it to the courier. You will get the tracking note on that call.
-            </p>
-            <Link
-              to="/order/$id"
-              params={{ id: order.id }}
-              className="mt-3 inline-block text-sm underline underline-offset-4"
-            >
-              Open the request
-            </Link>
-          </li>
-        ))}
-      </ul>
+      {result && result.found ? (
+        <div className="mt-8 border border-line bg-ivory p-6">
+          <p className="font-serif text-3xl tabular-nums">{result.id}</p>
+          <p className="mt-1 text-sm text-mute">
+            {new Date(result.createdAt).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}
+            {" · "}
+            {result.city}
+          </p>
 
-      {orders.length === 0 && hits === null ? (
-        <p className="mt-8 text-sm text-mute">No requests on this device yet.</p>
+          <div className="mt-6 border-t border-line pt-5">
+            <p className="text-xs tracking-widest text-gold uppercase">Status</p>
+            <p className="mt-2 font-serif text-2xl">{statusCopy[result.status].title}</p>
+            <p className="mt-2 text-sm text-ink-soft">{statusCopy[result.status].body}</p>
+          </div>
+
+          <ul className="mt-6 space-y-1 border-t border-line pt-5 text-sm">
+            {result.items.map((item) => (
+              <li key={item}>{item}</li>
+            ))}
+          </ul>
+          <dl className="mt-4 space-y-2 border-t border-line pt-4 text-sm">
+            <div className="flex justify-between">
+              <dt className="text-mute">Payment</dt>
+              <dd>{payMethods.find((m) => m.id === result.pay)?.name ?? result.pay}</dd>
+            </div>
+            <div className="flex justify-between">
+              <dt className="text-mute">Total</dt>
+              <dd className="tabular-nums">{taka(result.total)}</dd>
+            </div>
+          </dl>
+
+          <Link
+            to="/order/$id"
+            params={{ id: result.id }}
+            className="mt-5 inline-block text-sm underline underline-offset-4"
+          >
+            Open the request
+          </Link>
+        </div>
       ) : null}
     </div>
   );

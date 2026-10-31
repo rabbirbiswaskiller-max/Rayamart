@@ -1,6 +1,7 @@
 import { createRootRoute, HeadContent, Outlet, Scripts } from "@tanstack/react-router";
 import { AuthProvider } from "@/lib/auth/provider";
 import { Shell } from "@/components/shell";
+import { useRefCapture } from "@/lib/referral";
 import appCss from "../styles.css?url";
 
 export const Route = createRootRoute({
@@ -33,7 +34,12 @@ export const Route = createRootRoute({
       { rel: "apple-touch-icon", href: "/__grok/icon-180.png" },
     ],
   }),
-  component: () => (
+  component: RootDocument,
+});
+
+function RootDocument() {
+  useRefCapture();
+  return (
     <html lang="en" suppressHydrationWarning>
       <head>
         <HeadContent />
@@ -47,5 +53,5 @@ export const Route = createRootRoute({
         <Scripts />
       </body>
     </html>
-  ),
-});
+  );
+}
