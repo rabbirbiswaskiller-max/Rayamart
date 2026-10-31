@@ -18,7 +18,9 @@ function OrderPage() {
   const [message, setMessage] = useState("");
   const [busy, setBusy] = useState(false);
   const pay = payMethods.find((m) => m.id === order?.customer.pay);
-  const needsTrx = order?.customer.pay === "bkash" || order?.customer.pay === "nagad";
+  const isCOD = order?.customer.pay === "cod";
+  const needsTrx = order?.customer.pay === "bkash" || order?.customer.pay === "nagad" || isCOD;
+  const amountDue = order ? (isCOD ? order.advanceDue : order.total) : 0;
 
   if (!order) {
     return (
@@ -68,14 +70,17 @@ function OrderPage() {
 
       {needsTrx ? (
         <section className="mt-10 border border-line bg-ivory p-6">
-          <p className="text-xs tracking-widest text-gold uppercase">Send money</p>
+          <p className="text-xs tracking-widest text-gold uppercase">
+            {isCOD ? "Delivery fee" : "Send money"}
+          </p>
           {paid ? (
             <p className="mt-3 font-serif text-3xl">Payment confirmed.</p>
           ) : (
             <>
               <p className="mt-3 text-ink-soft">
-                Send exactly <strong className="tabular-nums">{taka(order.total)}</strong> to{" "}
+                Send exactly <strong className="tabular-nums">{taka(amountDue)}</strong> to{" "}
                 <strong className="tabular-nums">{PAY_NUMBER}</strong> using {pay?.name} “Send Money”.
+                {isCOD ? " This is the advance delivery fee. The products are paid to the courier on delivery." : ""}{" "}
                 Then paste the TrxID you receive below.
               </p>
               <form onSubmit={onSubmitTrx} className="mt-5 flex flex-col gap-3 sm:flex-row">
