@@ -2,6 +2,12 @@ import { createFileRoute } from "@tanstack/react-router";
 import { taka } from "@/lib/catalog";
 import { listAllAdminOrders } from "@/lib/orders";
 
+const methodLabel: Record<string, string> = {
+  bkash: "bKash",
+  nagad: "Nagad",
+  cod: "Cash on delivery",
+};
+
 export const Route = createFileRoute("/admin-payments")({
   head: () => ({ meta: [{ title: "Payments — Raya Mart admin" }] }),
   loader: async () => ({ orders: await listAllAdminOrders() }),
@@ -44,7 +50,7 @@ function AdminPayments() {
                   <br />
                   <span className="text-mute">{o.customer.phone}</span>
                 </td>
-                <td className="py-3 pr-4">{o.customer.pay}</td>
+                <td className="py-3 pr-4">{methodLabel[o.customer.pay] ?? o.customer.pay}</td>
                 <td className="py-3 pr-4 tabular-nums">
                   {taka(o.customer.pay === "cod" ? o.advanceDue : o.total)}
                 </td>
