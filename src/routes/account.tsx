@@ -1,10 +1,77 @@
 import { useState, type FormEvent } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { authClient } from "@/lib/auth/client";
+import { authClient, signOut } from "@/lib/auth/client";
+import { getMyAccount, type AccountOrder, type AccountOrderStatus } from "@/lib/customers";
+import { payMethods, taka } from "@/lib/catalog";
 
-export const Route = createFileRoute("/account")({ component: CustomerAccount });
+export const Route = createFileRoute("/account")({
+  loader: () => getMyAccount(),
+  component: CustomerAccount,
+});
 
-type Mode = "login" | "register";
+function CustomerAccount() {
+  const data = Route.useLoaderData();
+  if (data.signedIn) {
+    return <SignedInView name={data.name} phone={data.phone} orders={data.orders} />;
+  }
+  return <AuthForm />;
+}
+
+const statusText: Record<AccountOrderStatus, string> = {
+  unpaid: "পেমেন্ট অপেক্ষায়",
+  paid: "পেমেন্ট নিশ্চিত, প্রক্রিয়াধীন",
+  delivered: "ডেলিভার হয়েছে",
+  cancelled: "বাতিল বা সময়সীমা শেষ",
+};
+
+function SignedInView({ name, phone, orders }: { name: string; phone: string | null; orders: AccountOrder[] }) {
+  const [busy, setBusy] = useState(false);
+
+  return (
+    <main className="mx-auto max-w-2xl px-4 py-12 sm:py-16">
+      <Link to="/" className="font-serif text-4xl text-pine">Raya Mart</Link>
+      <section className="mt-8 border border-line bg-white p-6 sm:p-8">
+        <p className="text-xs uppercase tracking-[0.2em] text-mute">Your account</p>
+        <h1 className="mt-2 font-serif text-3xl">স্বাগতম{name ? `, ${name}` : ""}</h1>
+        {phone ? <p className="mt-2 text-sm text-ink-soft">মোবাইল: {phone}</p> : null}
+        <button
+          type="button"
+          disabled={busy}
+          onClick={async () => {
+            setBusy(true);
+            await signOut("/account");
+          }}
+          className="mt-5 border border-line px-4 py-2 text-sm disabled:opacity-50"
+        >
+          লগআউট
+        </button>
+      </section>
+
+      <section className="mt-8">
+        <h2 className="font-serif text-2xl">আমার অর্ডার</h2>
+        {orders.length === 0 ? (
+          <p className="mt-3 text-sm text-mute">এখনো কোনো অর্ডার নেই। প্রোডাক্ট দেখতে Shop দেখো।</p>
+        ) : (
+          <ul className="mt-4 space-y-3">
+            {orders.map((o) => (
+              <li key={o.id} className="border border-line bg-white p-5">
+                <div className="flex flex-wrap items-baseline justify-between gap-2">
+                  <p className="font-mono text-sm">{o.id}</p>
+                  <p className="text-xs text-mute">{new Date(o.createdAt).toLocaleDateString("en-GB")}</p>
+                </div>
+                <p className="mt-2 text-sm text-ink-soft">{o.items.join(", ")}</p>
+                <div className="mt-3 flex flex-wrap items-baseline justify-between gap-2 text-sm">
+                  <p className="tabular-nums">{taka(o.total)} · {payMethods.find((m) => m.id === o.pay)?.name ?? o.pay}</p>
+                  <p className="font-medium">{statusText[o.status]}</p>
+                </div>
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
+    </main>
+  );
+}
 
 function normalizeBangladeshPhone(value: string): string | null {
   const digits = value.replace(/\D/g, "");
@@ -20,7 +87,9 @@ function internalEmail(phone: string): string {
   return `phone-${phone}@phone.rayamart.invalid`;
 }
 
-function CustomerAccount() {
+type Mode = "login" | "register";
+
+function AuthForm() {
   const [mode, setMode] = useState<Mode>("login");
   const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
@@ -37,7 +106,7 @@ function CustomerAccount() {
       return;
     }
     if (password.length < 8) {
-      setMessage("পাসওয়ার্ড কমপক্ষে ৮ অক্ষরের হতে হবে।");
+      setMessage("পাসওয়ার্ড কমপক্ষে ৮ অক্ষরের হতে হবে।");
       return;
     }
     if (mode === "register" && name.trim().length < 2) {
@@ -54,19 +123,18 @@ function CustomerAccount() {
           email,
           password,
         });
-        if (result.error) throw new Error(result.error.message || "অ্যাকাউন্ট খোলা যায়নি।");
+        if (result.error) throw new Error(result.error.message || "অ্যাকাউন্ট খোলা যায়নি।");
       } else {
         const result = await authClient.signIn.email({ email, password });
-        if (result.error) throw new Error(result.error.message || "নম্বর বা পাসওয়ার্ড সঠিক নয়।");
+        if (result.error) throw new Error(result.error.message || "নম্বর বা পাসওয়ার্ড সঠিক নয়।");
       }
       window.location.href = "/account";
     } catch (error) {
-      setMessage(error instanceof Error ? error.message : "লগইন করা যায়নি। আবার চেষ্টা করো।");
+      setMessage(error instanceof Error ? error.message : "লগইন করা যায়নি। আবার চেষ্টা করো।");
     } finally {
       setBusy(false);
     }
   }
-
 
   const field = "w-full border border-line bg-white px-4 py-3 text-sm outline-none focus:border-pine";
   const primary = "w-full bg-pine px-4 py-3 text-sm text-white disabled:opacity-50";
@@ -89,22 +157,21 @@ function CustomerAccount() {
         <form className="mt-5 space-y-4" onSubmit={submit}>
           {mode === "register" && (
             <label className="block text-sm">তোমার নাম
-              <input className={field + " mt-1"} value={name} onChange={e => setName(e.target.value)} autoComplete="name" required minLength={2} />
+              <input className={field + " mt-1"} value={name} onChange={(e) => setName(e.target.value)} autoComplete="name" required minLength={2} />
             </label>
           )}
           <label className="block text-sm">মোবাইল নম্বর
-            <input className={field + " mt-1"} value={phone} onChange={e => setPhone(e.target.value)} inputMode="tel" autoComplete="tel" placeholder="01XXXXXXXXX" required />
+            <input className={field + " mt-1"} value={phone} onChange={(e) => setPhone(e.target.value)} inputMode="tel" autoComplete="tel" placeholder="01XXXXXXXXX" required />
           </label>
-          <label className="block text-sm">পাসওয়ার্ড
-            <input className={field + " mt-1"} value={password} onChange={e => setPassword(e.target.value)} type="password" autoComplete={mode === "login" ? "current-password" : "new-password"} minLength={8} required />
+          <label className="block text-sm">পাসওয়ার্ড
+            <input className={field + " mt-1"} value={password} onChange={(e) => setPassword(e.target.value)} type="password" autoComplete={mode === "login" ? "current-password" : "new-password"} minLength={8} required />
           </label>
           <button className={primary} type="submit" disabled={busy}>{busy ? "অপেক্ষা করো…" : mode === "login" ? "Login" : "Create account"}</button>
         </form>
 
-
         {message && <p role="alert" className="mt-4 text-sm text-red-700">{message}</p>}
         <p className="mt-5 text-xs leading-5 text-mute">
-          OTP ছাড়া অ্যাকাউন্ট খোলা হচ্ছে, তাই মোবাইল নম্বরের মালিকানা যাচাই হয় না। পাসওয়ার্ড ভুলে গেলে আপাতত স্বয়ংক্রিয় ফোন-ভিত্তিক রিকভারি নেই।
+          OTP ছাড়া অ্যাকাউন্ট খোলা হচ্ছে, তাই মোবাইল নম্বরের মালিকানা যাচাই হয় না। পাসওয়ার্ড ভুলে গেলে আপাতত স্বয়ংক্রিয় ফোন-ভিত্তিক রিকভারি নেই।
         </p>
       </section>
     </main>
