@@ -225,11 +225,6 @@ export const payMethods: { id: PayMethod; name: string; line: string }[] = [
     line: "Same as bKash — nothing is taken before we call.",
   },
   {
-    id: "card",
-    name: "Card",
-    line: "A secure link, only once the order is confirmed.",
-  },
-  {
     id: "cod",
     name: "Cash on delivery",
     line: "Pay the courier. Available on pieces already in Dhaka.",
