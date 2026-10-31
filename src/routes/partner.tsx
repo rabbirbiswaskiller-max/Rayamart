@@ -82,7 +82,9 @@ function PartnerPage() {
           <p className="font-serif text-2xl">তুমি অনুমোদিত partner</p>
           <p className="mt-3 text-sm text-ink-soft">তোমার লিংক:</p>
           <p className="mt-1 break-all font-mono text-sm">https://rayamart.vercel.app/?ref={data.partner.code}</p>
-          <p className="mt-4 text-sm text-ink-soft">নিজের ড্যাশবোর্ড শিগগিরই চালু হবে।</p>
+          <Link to="/partner-dashboard" className="mt-5 inline-flex h-12 items-center bg-pine px-6 text-sm text-ivory">
+            ড্যাশবোর্ড খোলো
+          </Link>
         </div>
       ) : (
         <div className="mt-8 border border-line bg-ivory p-6">
