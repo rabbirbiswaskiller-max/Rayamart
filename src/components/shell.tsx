@@ -1,8 +1,9 @@
 import { useEffect, useState, type FormEvent, type ReactNode } from "react";
-import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
+import { Link, useLoaderData, useNavigate, useRouterState } from "@tanstack/react-router";
 import { Menu, Search, ShoppingBag, X } from "lucide-react";
 import { Toaster } from "sonner";
 import { categories, houses } from "@/lib/catalog";
+import { HeaderAccount } from "@/components/header-account";
 import { useCartCount } from "@/lib/store";
 import type { ShopQuery } from "@/lib/catalog";
 
@@ -16,6 +17,7 @@ export function Shell({ children }: { children: ReactNode }) {
   const quiet = path.startsWith("/checkout") || path.startsWith("/order");
   const [open, setOpen] = useState(false);
   const count = useCartCount();
+  const headerUser = useLoaderData({ from: "__root__" });
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -79,12 +81,7 @@ export function Shell({ children }: { children: ReactNode }) {
           <div className="ml-auto hidden min-w-0 flex-1 justify-end md:flex">
             <SearchForm className="w-full max-w-xs" />
           </div>
-          <Link
-            to="/account"
-            className="inline-flex h-10 items-center border border-line px-3 text-xs tracking-wide hover:border-ink"
-          >
-            Sign in
-          </Link>
+          <HeaderAccount />
           <Link
             to="/bag"
             className="ml-auto inline-flex h-11 items-center gap-2 px-2 md:ml-3"
@@ -132,8 +129,13 @@ export function Shell({ children }: { children: ReactNode }) {
           </div>
           <nav className="flex flex-col px-6 py-4 pb-16">
             <MobileLink to="/account" onClick={() => setOpen(false)}>
-              Sign in
+              {headerUser.signedIn ? `আমার অ্যাকাউন্ট (${headerUser.name || "স্বাগতম"})` : "Sign in"}
             </MobileLink>
+            {headerUser.signedIn ? (
+              <MobileLink to="/account" hash="orders" onClick={() => setOpen(false)}>
+                আমার অর্ডার
+              </MobileLink>
+            ) : null}
             <MobileLink to="/" onClick={() => setOpen(false)}>
               Home
             </MobileLink>
@@ -247,12 +249,21 @@ function MobileLink({
   onClick,
   to,
   search,
+  hash,
 }: {
   children: ReactNode;
   onClick: () => void;
   to: "/" | "/shop" | "/house" | "/track" | "/partner" | "/bag" | "/account";
   search?: ShopQuery;
+  hash?: string;
 }) {
+  if (to === "/account") {
+    return (
+      <Link to="/account" hash={hash} onClick={onClick} className="border-b border-line py-3 font-serif text-3xl">
+        {children}
+      </Link>
+    );
+  }
   if (to === "/shop") {
     return (
       <Link
