@@ -2,10 +2,10 @@ import { useEffect, useState, type FormEvent } from "react";
 import { createFileRoute, Link, useNavigate, useRouter } from "@tanstack/react-router";
 import { toast } from "sonner";
 import { Eye, EyeOff, Lock, Mail, Phone, User } from "lucide-react";
-import { authClient, getBearerToken, setBearerToken, signOut } from "@/lib/auth/client";
+import { authClient, getBearerToken, signOut } from "@/lib/auth/client";
+import { signInWithPassword, signUpWithPassword } from "@/lib/auth/password-auth";
 import {
   getMyAccount,
-  saveMyPhone,
   updateMyProfile,
   type AccountOrder,
   type AccountOrderStatus,
@@ -507,12 +507,6 @@ function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
   });
 }
 
-// Keep the bearer token Better Auth returns on sign-in/sign-up (set-auth-token header).
-function keepBearer(response: Response): void {
-  const token = response.headers.get("set-auth-token");
-  if (token) setBearerToken(token);
-}
-
 function AuthForm() {
   const [mode, setMode] = useState<Mode>("login");
   const [identifier, setIdentifier] = useState("");
@@ -552,33 +546,25 @@ function AuthForm() {
           const found = await findLoginEmail({ data: { phone: "0" + normalized.slice(3) } });
           loginEmail = found.email ?? internalEmail(normalized);
         }
-        const result = await withTimeout(
-          authClient.signIn.email(
-            { email: loginEmail, password },
-            { onSuccess: (ctx) => keepBearer(ctx.response) },
-          ),
-          20000,
-        );
-        if (result.error) throw new Error(result.error.message || "ইমেইল/মোবাইল বা পাসওয়ার্ড ঠিক নয়।");
+        const result = await withTimeout(signInWithPassword({ data: { email: loginEmail, password } }), 20000);
+        if (!result.ok) throw new Error(result.message);
       } else {
         if (name.trim().length < 2) throw new Error("আপনার নাম লিখুন।");
         const normalized = normalizeBangladeshPhone(phone);
         if (!normalized) throw new Error("সঠিক বাংলাদেশি মোবাইল নম্বর দিন (যেমন 01XXXXXXXXX)।");
         const trimmedEmail = email.trim().toLowerCase();
         if (trimmedEmail && !trimmedEmail.includes("@")) throw new Error("সঠিক ইমেইল দিন (ঐচ্ছিক)।");
-        const result = await authClient.signUp.email(
-          {
+        const result = await signUpWithPassword({
+          data: {
             name: name.trim(),
             email: trimmedEmail || internalEmail(normalized),
             password,
+            phone: "0" + normalized.slice(3),
           },
-          { onSuccess: (ctx) => keepBearer(ctx.response) },
-        );
-        if (result.error) throw new Error(result.error.message || "অ্যাকাউন্ট খোলা যায়নি।");
-        await saveMyPhone({ data: { phone: "0" + normalized.slice(3) } });
+        });
+        if (!result.ok) throw new Error(result.message);
       }
-      // The bearer token stays in sessionStorage across this same-tab load, and the
-      // account page re-fetches with it on mount.
+      // The session cookie is set by the server, so the account page now sees it.
       window.location.assign("/account");
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "কিছু একটি সমস্যা হয়েছে। আবার চেষ্টা করো।");
