@@ -1,7 +1,7 @@
 import { useEffect, useState, type FormEvent } from "react";
 import { createFileRoute, Link, useNavigate, useRouter } from "@tanstack/react-router";
 import { toast } from "sonner";
-import { Lock, Mail, Phone, User } from "lucide-react";
+import { Eye, EyeOff, Lock, Mail, Phone, User } from "lucide-react";
 import { authClient, signOut } from "@/lib/auth/client";
 import {
   getMyAccount,
@@ -486,6 +486,7 @@ function AuthForm() {
   const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
 
@@ -619,14 +620,23 @@ function AuthForm() {
 
             <AuthField label="পাসওয়ার্ড" icon={<Lock />}>
               <input
-                className={darkInput}
+                className={`${darkInput} pr-12`}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                type="password"
+                type={showPassword ? "text" : "password"}
                 autoComplete={mode === "login" ? "current-password" : "new-password"}
                 minLength={8}
                 required
               />
+              <button
+                type="button"
+                onClick={() => setShowPassword((v) => !v)}
+                aria-label={showPassword ? "পাসওয়ার্ড লুকাও" : "পাসওয়ার্ড দেখাও"}
+                aria-pressed={showPassword}
+                className="absolute top-1/2 right-4 -translate-y-1/2 text-[#00f2fe]/80 transition-colors duration-200 hover:text-[#00f2fe] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#00f2fe] [&>svg]:size-5"
+              >
+                {showPassword ? <EyeOff /> : <Eye />}
+              </button>
             </AuthField>
 
             <button
