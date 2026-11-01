@@ -1,5 +1,6 @@
 import { createRootRoute, HeadContent, Outlet, redirect, Scripts } from "@tanstack/react-router";
 import { AuthProvider } from "@/lib/auth/provider";
+import { getHeaderUser } from "@/lib/auth/header-user";
 import { Shell } from "@/components/shell";
 import { useRefCapture } from "@/lib/referral";
 import appCss from "../styles.css?url";
@@ -48,6 +49,8 @@ export const Route = createRootRoute({
       { rel: "apple-touch-icon", href: "/__grok/icon-180.png" },
     ],
   }),
+  // Session identity for the header (signed-in name/initials). Cheap and never throws.
+  loader: () => getHeaderUser(),
   component: RootDocument,
 });
 
