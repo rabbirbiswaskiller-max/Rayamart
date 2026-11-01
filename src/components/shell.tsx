@@ -81,7 +81,7 @@ export function Shell({ children }: { children: ReactNode }) {
           </div>
           <Link
             to="/account"
-            className="hidden h-10 items-center border border-line px-3 text-xs tracking-wide hover:border-ink sm:inline-flex"
+            className="inline-flex h-10 items-center border border-line px-3 text-xs tracking-wide hover:border-ink"
           >
             Sign in
           </Link>
@@ -131,6 +131,9 @@ export function Shell({ children }: { children: ReactNode }) {
             </button>
           </div>
           <nav className="flex flex-col px-6 py-4 pb-16">
+            <MobileLink to="/account" onClick={() => setOpen(false)}>
+              Sign in
+            </MobileLink>
             <MobileLink to="/" onClick={() => setOpen(false)}>
               Home
             </MobileLink>
@@ -158,9 +161,6 @@ export function Shell({ children }: { children: ReactNode }) {
             </MobileLink>
             <MobileLink to="/bag" onClick={() => setOpen(false)}>
               Bag
-            </MobileLink>
-            <MobileLink to="/account" onClick={() => setOpen(false)}>
-              Sign in
             </MobileLink>
           </nav>
         </div>
