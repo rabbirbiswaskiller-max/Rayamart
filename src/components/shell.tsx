@@ -81,10 +81,12 @@ export function Shell({ children }: { children: ReactNode }) {
           <div className="ml-auto hidden min-w-0 flex-1 justify-end md:flex">
             <SearchForm className="w-full max-w-xs" />
           </div>
-          <HeaderAccount />
+          <div className="ml-auto flex items-center">
+            <HeaderAccount />
+          </div>
           <Link
             to="/bag"
-            className="ml-auto inline-flex h-11 items-center gap-2 px-2 md:ml-3"
+            className="inline-flex h-11 items-center gap-2 px-2 md:ml-3"
             aria-label="Open bag"
           >
             <ShoppingBag className="size-5" />
