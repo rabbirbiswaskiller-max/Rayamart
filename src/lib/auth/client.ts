@@ -57,7 +57,7 @@ export function getBearerToken(): string | null {
   }
 }
 
-function setBearerToken(token: string | null): void {
+export function setBearerToken(token: string | null): void {
   if (typeof window === "undefined") return;
   try {
     if (token) window.sessionStorage.setItem(BEARER_KEY, token);
@@ -233,4 +233,26 @@ export async function signOut(redirectTo = "/"): Promise<void> {
       window.location.href = redirectTo;
     },
   });
+}
+
+// Server functions (createServerFn calls such as getMyAccount) and loaders reach
+// the server through the global fetch, not through Better Auth. When the session
+// cookie does not reach the server, the stored bearer token is the only way the
+// server can see the session, so attach it to every same-origin request. Nothing
+// is attached when no token is stored (cookie-only visitors are unaffected).
+if (typeof window !== "undefined") {
+  const nativeFetch = window.fetch.bind(window);
+  window.fetch = (input: RequestInfo | URL, init?: RequestInit) => {
+    const token = getBearerToken();
+    if (!token) return nativeFetch(input, init);
+    const href = input instanceof Request ? input.url : String(input);
+    const sameOrigin =
+      href.startsWith("/") && !href.startsWith("//")
+        ? true
+        : href.startsWith(`${window.location.origin}/`) || href === window.location.origin;
+    if (!sameOrigin) return nativeFetch(input, init);
+    const headers = new Headers(init?.headers ?? (input instanceof Request ? input.headers : undefined));
+    if (!headers.has("Authorization")) headers.set("Authorization", `Bearer ${token}`);
+    return nativeFetch(input, { ...init, headers });
+  };
 }
