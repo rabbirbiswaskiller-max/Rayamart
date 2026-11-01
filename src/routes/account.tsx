@@ -10,6 +10,7 @@ import {
   type AccountOrder,
   type AccountOrderStatus,
 } from "@/lib/customers";
+import { findLoginEmail } from "@/lib/login-lookup";
 import { listMyAddresses, saveMyAddress, deleteMyAddress, type SavedAddress } from "@/lib/addresses";
 import { getMyWishlist, toggleWishlist } from "@/lib/wishlist";
 import { cities, payMethods, taka, type Product } from "@/lib/catalog";
@@ -513,7 +514,10 @@ function AuthForm() {
         } else {
           const normalized = normalizeBangladeshPhone(id);
           if (!normalized) throw new Error("সঠিক ইমেইল বা মোবাইল নম্বর দিন।");
-          loginEmail = internalEmail(normalized);
+          // Find the account that has this mobile number saved. Falls back to the
+          // mobile-only internal email for accounts created with a number alone.
+          const found = await findLoginEmail({ data: { phone: "0" + normalized.slice(3) } });
+          loginEmail = found.email ?? internalEmail(normalized);
         }
         const result = await authClient.signIn.email({ email: loginEmail, password });
         if (result.error) throw new Error(result.error.message || "ইমেইল/মোবাইল বা পাসওয়ার্ড ঠিক নয়।");
