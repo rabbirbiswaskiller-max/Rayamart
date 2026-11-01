@@ -2,7 +2,7 @@ import { useEffect, useState, type FormEvent } from "react";
 import { createFileRoute, Link, useNavigate, useRouter } from "@tanstack/react-router";
 import { toast } from "sonner";
 import { Eye, EyeOff, Lock, Mail, Phone, User } from "lucide-react";
-import { authClient, getBearerToken, signOut } from "@/lib/auth/client";
+import { authClient, getBearerToken, setBearerToken, signOut } from "@/lib/auth/client";
 import { signInWithPassword, signUpWithPassword } from "@/lib/auth/password-auth";
 import {
   getMyAccount,
@@ -548,6 +548,7 @@ function AuthForm() {
         }
         const result = await withTimeout(signInWithPassword({ data: { email: loginEmail, password } }), 20000);
         if (!result.ok) throw new Error(result.message);
+        setBearerToken(result.token);
       } else {
         if (name.trim().length < 2) throw new Error("আপনার নাম লিখুন।");
         const normalized = normalizeBangladeshPhone(phone);
@@ -563,6 +564,7 @@ function AuthForm() {
           },
         });
         if (!result.ok) throw new Error(result.message);
+        setBearerToken(result.token);
       }
       // The session cookie is set by the server, so the account page now sees it.
       window.location.assign("/account");
