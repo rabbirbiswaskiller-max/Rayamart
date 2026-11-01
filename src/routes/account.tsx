@@ -487,6 +487,26 @@ function tabClass(active: boolean): string {
   }`;
 }
 
+// Stops a request that never answers from leaving the button busy forever.
+function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
+  return new Promise<T>((resolve, reject) => {
+    const timer = window.setTimeout(
+      () => reject(new Error("সার্ভার সাড়া দিচ্ছে না। একটু পরে আবার চেষ্টা করো।")),
+      ms,
+    );
+    promise.then(
+      (value) => {
+        window.clearTimeout(timer);
+        resolve(value);
+      },
+      (error) => {
+        window.clearTimeout(timer);
+        reject(error);
+      },
+    );
+  });
+}
+
 // Keep the bearer token Better Auth returns on sign-in/sign-up (set-auth-token header).
 function keepBearer(response: Response): void {
   const token = response.headers.get("set-auth-token");
@@ -503,7 +523,6 @@ function AuthForm() {
   const [showPassword, setShowPassword] = useState(false);
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
-  const router = useRouter();
 
   function switchMode(next: Mode) {
     setMode(next);
@@ -533,9 +552,12 @@ function AuthForm() {
           const found = await findLoginEmail({ data: { phone: "0" + normalized.slice(3) } });
           loginEmail = found.email ?? internalEmail(normalized);
         }
-        const result = await authClient.signIn.email(
-          { email: loginEmail, password },
-          { onSuccess: (ctx) => keepBearer(ctx.response) },
+        const result = await withTimeout(
+          authClient.signIn.email(
+            { email: loginEmail, password },
+            { onSuccess: (ctx) => keepBearer(ctx.response) },
+          ),
+          20000,
         );
         if (result.error) throw new Error(result.error.message || "ইমেইল/মোবাইল বা পাসওয়ার্ড ঠিক নয়।");
       } else {
@@ -555,9 +577,9 @@ function AuthForm() {
         if (result.error) throw new Error(result.error.message || "অ্যাকাউন্ট খোলা যায়নি।");
         await saveMyPhone({ data: { phone: "0" + normalized.slice(3) } });
       }
-      // Reload account data in place (the bearer token is already stored) instead
-      // of a full page load, which would lose the token before the server sees it.
-      await router.invalidate();
+      // The bearer token stays in sessionStorage across this same-tab load, and the
+      // account page re-fetches with it on mount.
+      window.location.assign("/account");
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "কিছু একটি সমস্যা হয়েছে। আবার চেষ্টা করো।");
       setBusy(false);
