@@ -1,6 +1,7 @@
 import { useEffect, useState, type FormEvent } from "react";
 import { createFileRoute, Link, useNavigate, useRouter } from "@tanstack/react-router";
 import { toast } from "sonner";
+import { Lock, Mail, Phone, User } from "lucide-react";
 import { authClient, signOut } from "@/lib/auth/client";
 import {
   getMyAccount,
@@ -191,7 +192,7 @@ function PasswordForm() {
   async function save(ev: FormEvent<HTMLFormElement>) {
     ev.preventDefault();
     if (next.length < 8) {
-      toast.error("নতুন পাসওয়ার্ড কমপক্ষে বেক মে মৃনো মুডমের্ডে বাকৃত ঘন্টিভিকে।");
+      toast.error("নতুন পাসওয়ার্ড কমপক্ষে ৮ অক্ষরের হতে হবে।");
       return;
     }
     setBusy(true);
@@ -453,6 +454,31 @@ function internalEmail(phone: string): string {
 
 type Mode = "login" | "register";
 
+const darkInput =
+  "h-[52px] w-full rounded-2xl border border-[#174247] bg-white/[0.03] pl-11 pr-4 text-[15px] text-[#e6fbfc] placeholder:text-[#4d6e72] outline-none transition-[border-color,box-shadow,background-color] duration-200 hover:border-[#22595f] focus:border-[#00f2fe] focus:bg-[#00f2fe]/[0.04] focus:shadow-[0_0_0_4px_rgba(0,242,254,0.12),0_0_22px_rgba(0,242,254,0.25)]";
+
+function AuthField({ label, icon, children }: { label: string; icon: React.ReactNode; children: React.ReactNode }) {
+  return (
+    <label className="block">
+      <span className="mb-2 block text-xs tracking-wide text-[#7ea3a7]">{label}</span>
+      <span className="relative block">
+        <span className="pointer-events-none absolute top-1/2 left-4 -translate-y-1/2 text-[#7ea3a7] transition-colors duration-200 group-focus-within:text-[#00f2fe] [&>svg]:size-[18px]">
+          {icon}
+        </span>
+        {children}
+      </span>
+    </label>
+  );
+}
+
+function tabClass(active: boolean): string {
+  return `h-10 rounded-xl text-sm font-medium transition-all duration-200 ${
+    active
+      ? "bg-gradient-to-r from-[#00c6d1] to-[#00f2fe] text-[#03181a] shadow-[0_6px_20px_rgba(0,242,254,0.3)]"
+      : "text-[#7ea3a7] hover:text-[#e6fbfc]"
+  }`;
+}
+
 function AuthForm() {
   const [mode, setMode] = useState<Mode>("login");
   const [identifier, setIdentifier] = useState("");
@@ -462,6 +488,11 @@ function AuthForm() {
   const [password, setPassword] = useState("");
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
+
+  function switchMode(next: Mode) {
+    setMode(next);
+    setMessage("");
+  }
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -507,42 +538,112 @@ function AuthForm() {
   }
 
   return (
-    <main className="mx-auto max-w-md px-4 py-12 sm:py-16">
-      <Link to="/" className="font-serif text-4xl text-pine">Raya Mart</Link>
-      <section className="mt-8 border border-line bg-white p-6 sm:p-8">
-        <p className="text-xs uppercase tracking-[0.2em] text-mute">অ্যাকাউন্ট</p>
-        <h1 className="mt-2 font-serif text-3xl">{mode === "login" ? "লগইন" : "নতুন অ্যাকাউন্ট"}</h1>
-
-        <div className="mt-6 grid grid-cols-2 border border-line p-1">
-          <button type="button" className={mode === "login" ? "bg-pine px-3 py-2 text-sm text-white" : "px-3 py-2 text-sm"} onClick={() => { setMode("login"); setMessage(""); }}>লগইন</button>
-          <button type="button" className={mode === "register" ? "bg-pine px-3 py-2 text-sm text-white" : "px-3 py-2 text-sm"} onClick={() => { setMode("register"); setMessage(""); }}>রেজিস্টার</button>
+    <main className="min-h-[calc(100vh-4rem)] bg-[#050d0e] px-4 py-10 sm:py-16">
+      <section className="group mx-auto grid max-w-4xl overflow-hidden rounded-3xl border border-[#00f2fe]/10 bg-[#0a1719] shadow-[0_30px_80px_rgba(0,0,0,0.6),0_0_60px_rgba(0,242,254,0.12)] md:grid-cols-[1.05fr_1fr]">
+        <div className="relative flex flex-col justify-center overflow-hidden bg-gradient-to-br from-[#053d42] via-[#0b5f66] to-[#0a8f99] px-8 py-14 text-[#e6fbfc] [clip-path:polygon(0_0,100%_0,100%_88%,0_100%)] md:px-12 md:[clip-path:polygon(0_0,100%_0,84%_100%,0_100%)]">
+          <span aria-hidden className="absolute -top-28 -right-28 size-80 rotate-45 rounded-[36px] border-2 border-[#00f2fe]/35" />
+          <span aria-hidden className="absolute -bottom-20 -left-24 size-56 rotate-[20deg] rounded-[40px] bg-gradient-to-br from-[#00f2fe]/35 to-transparent" />
+          <span aria-hidden className="absolute right-12 bottom-24 size-24 rotate-45 border-2 border-[#00f2fe]/60" />
+          <span aria-hidden className="absolute top-20 left-14 size-3.5 rotate-45 bg-[#00f2fe] shadow-[0_0_18px_#00f2fe]" />
+          <div className="relative">
+            <Link to="/" className="font-serif text-2xl text-[#00f2fe]">Raya Mart</Link>
+            <h2 className="mt-10 text-5xl font-extrabold tracking-[0.04em] text-white md:text-6xl">
+              WEL<span className="text-[#00f2fe]">COME</span>
+            </h2>
+            <p className="mt-4 max-w-xs text-[15px] leading-relaxed text-[#e6fbfc]/80">
+              অর্ডার, ঠিকানা ও পছন্দের প্রোডাক্ট — সবকিছু এক জায়গায়।
+            </p>
+          </div>
         </div>
 
-        <form className="mt-5 space-y-4" onSubmit={submit}>
-          {mode === "login" ? (
-            <label className="block text-sm">ইমেইল বা মোবাইল নম্বর
-              <input className={field + " mt-1"} value={identifier} onChange={(e) => setIdentifier(e.target.value)} autoComplete="username" placeholder="you@example.com বা 01XXXXXXXXX" required />
-            </label>
-          ) : (
-            <>
-              <label className="block text-sm">তোমার নাম
-                <input className={field + " mt-1"} value={name} onChange={(e) => setName(e.target.value)} autoComplete="name" required minLength={2} />
-              </label>
-              <label className="block text-sm">মোবাইল নম্বর
-                <input className={field + " mt-1"} value={phone} onChange={(e) => setPhone(e.target.value)} inputMode="tel" autoComplete="tel" placeholder="01XXXXXXXXX" required />
-              </label>
-              <label className="block text-sm">ইমেইল (ঐচ্ছিক)
-                <input className={field + " mt-1"} value={email} onChange={(e) => setEmail(e.target.value)} type="email" autoComplete="email" />
-              </label>
-            </>
-          )}
-          <label className="block text-sm">পাসওয়ার্ড
-            <input className={field + " mt-1"} value={password} onChange={(e) => setPassword(e.target.value)} type="password" autoComplete={mode === "login" ? "current-password" : "new-password"} minLength={8} required />
-          </label>
-          <button className={btn + " w-full"} type="submit" disabled={busy}>{busy ? "অপেক্ষা করো…" : mode === "login" ? "লগইন" : "অ্যাকাউন্ট খোলো"}</button>
-        </form>
+        <div className="flex flex-col justify-center px-6 py-10 sm:px-10">
+          <div className="grid grid-cols-2 gap-1 rounded-2xl border border-[#174247] p-1">
+            <button type="button" className={tabClass(mode === "login")} onClick={() => switchMode("login")}>লগইন</button>
+            <button type="button" className={tabClass(mode === "register")} onClick={() => switchMode("register")}>রেজিস্টার</button>
+          </div>
 
-        {message && <p role="alert" className="mt-4 text-sm text-red-700">{message}</p>}
+          <h1 className="mt-8 text-3xl font-bold text-[#e6fbfc]">
+            {mode === "login" ? "আবার স্বাগতম" : "নতুন অ্যাকাউন্ট"}
+          </h1>
+          <p className="mt-2 text-sm text-[#7ea3a7]">
+            {mode === "login" ? "ইমেইল বা মোবাইল নম্বর দিয়ে লগইন করো।" : "তোমার তথ্য দিয়ে অ্যাকাউন্ট খোলো।"}
+          </p>
+
+          <form className="group mt-7 space-y-5" onSubmit={submit}>
+            {mode === "login" ? (
+              <AuthField label="ইমেইল বা মোবাইল নম্বর" icon={<User />}>
+                <input
+                  className={darkInput}
+                  value={identifier}
+                  onChange={(e) => setIdentifier(e.target.value)}
+                  autoComplete="username"
+                  placeholder="you@example.com বা 01XXXXXXXXX"
+                  required
+                />
+              </AuthField>
+            ) : (
+              <>
+                <AuthField label="তোমার নাম" icon={<User />}>
+                  <input
+                    className={darkInput}
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    autoComplete="name"
+                    required
+                    minLength={2}
+                  />
+                </AuthField>
+                <AuthField label="মোবাইল নম্বর" icon={<Phone />}>
+                  <input
+                    className={darkInput}
+                    value={phone}
+                    onChange={(e) => setPhone(e.target.value)}
+                    inputMode="tel"
+                    autoComplete="tel"
+                    placeholder="01XXXXXXXXX"
+                    required
+                  />
+                </AuthField>
+                <AuthField label="ইমেইল (ঐচ্ছিক)" icon={<Mail />}>
+                  <input
+                    className={darkInput}
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    type="email"
+                    autoComplete="email"
+                    placeholder="you@example.com"
+                  />
+                </AuthField>
+              </>
+            )}
+
+            <AuthField label="পাসওয়ার্ড" icon={<Lock />}>
+              <input
+                className={darkInput}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                type="password"
+                autoComplete={mode === "login" ? "current-password" : "new-password"}
+                minLength={8}
+                required
+              />
+            </AuthField>
+
+            <button
+              type="submit"
+              disabled={busy}
+              className="mt-2 h-[54px] w-full rounded-2xl bg-gradient-to-r from-[#00c6d1] via-[#00f2fe] to-[#00a8c4] text-base font-bold tracking-wide text-[#03181a] shadow-[0_10px_30px_rgba(0,242,254,0.3)] transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_16px_40px_rgba(0,242,254,0.45)] focus-visible:outline-2 focus-visible:outline-offset-3 focus-visible:outline-[#00f2fe] disabled:opacity-60 disabled:hover:translate-y-0"
+            >
+              {busy ? "অপেক্ষা করো…" : mode === "login" ? "লগইন" : "অ্যাকাউন্ট খোলো"}
+            </button>
+          </form>
+
+          {message ? (
+            <p role="alert" className="mt-5 rounded-xl border border-[#ff8a8a]/30 bg-[#ff8a8a]/10 px-4 py-3 text-sm text-[#ffb3b3]">
+              {message}
+            </p>
+          ) : null}
+        </div>
       </section>
     </main>
   );
