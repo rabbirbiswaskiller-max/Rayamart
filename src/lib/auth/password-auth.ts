@@ -8,11 +8,20 @@ import { createServerFn } from "@tanstack/react-start";
  * TanStack's setCookie do reach it.
  */
 
-type Result = { ok: true } | { ok: false; message: string };
+type Result = { ok: true; token: string } | { ok: false; message: string };
 
-/** Copy every Set-Cookie from a Better Auth response onto the TanStack response. */
-async function forwardSessionCookies(res: Response): Promise<void> {
+/** Must match `advanced.cookies.session_token.name` in `./server`. */
+const SESSION_COOKIE = "__Host-grok-auth.session_token";
+
+/**
+ * Copy every Set-Cookie from a Better Auth response onto the TanStack response.
+ * Returns the signed session token, which the browser also keeps as a bearer
+ * token (Better Auth's `bearer` plugin accepts it), so the session survives even
+ * if the cookie is not stored.
+ */
+async function forwardSessionCookies(res: Response): Promise<string> {
   const { setCookie } = await import("@tanstack/react-start/server");
+  let sessionToken = "";
   for (const raw of res.headers.getSetCookie()) {
     const [pair, ...attrs] = raw.split(";").map((part) => part.trim());
     const eq = pair.indexOf("=");
@@ -23,6 +32,7 @@ async function forwardSessionCookies(res: Response): Promise<void> {
     const lower = attrs.map((attr) => attr.toLowerCase());
     const maxAgeAttr = attrs.find((attr) => attr.toLowerCase().startsWith("max-age="));
     const maxAge = maxAgeAttr ? Number(maxAgeAttr.split("=")[1]) : undefined;
+    if (name === SESSION_COOKIE) sessionToken = value;
     setCookie(name, value, {
       path: "/",
       httpOnly: lower.includes("httponly"),
@@ -31,6 +41,7 @@ async function forwardSessionCookies(res: Response): Promise<void> {
       maxAge,
     });
   }
+  return sessionToken;
 }
 
 export const signInWithPassword = createServerFn({ method: "POST" })
@@ -44,8 +55,9 @@ export const signInWithPassword = createServerFn({ method: "POST" })
       asResponse: true,
     })) as Response;
     if (!res.ok) return { ok: false, message: "ইমেইল/মোবাইল বা পাসওয়ার্ড ঠিক নয়।" };
-    await forwardSessionCookies(res);
-    return { ok: true };
+    const token = await forwardSessionCookies(res);
+    if (!token) return { ok: false, message: "সেশন তৈরি করা যায়নি। আবার চেষ্টা করো।" };
+    return { ok: true, token };
   });
 
 export const signUpWithPassword = createServerFn({ method: "POST" })
@@ -79,6 +91,7 @@ export const signUpWithPassword = createServerFn({ method: "POST" })
     if (userId) {
       await sql.query('UPDATE "user" SET phone = $1 WHERE id = $2', [data.phone, userId]);
     }
-    await forwardSessionCookies(res);
-    return { ok: true };
+    const token = await forwardSessionCookies(res);
+    if (!token) return { ok: false, message: "সেশন তৈরি করা যায়নি। আবার চেষ্টা করো।" };
+    return { ok: true, token };
   });
