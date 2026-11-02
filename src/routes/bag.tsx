@@ -53,7 +53,7 @@ function BagPage() {
                   {line.product.name}
                 </Link>
                 <p className="mt-1 text-xs text-mute">
-                  {line.product.size}
+                  {line.size ? `Size: ${line.size} · ` : ""}{line.colour ? `Colour: ${line.colour} · ` : ""}{line.product.size}
                   {" · "}
                   {line.product.landed ? "Ready in Dhaka" : "From the house"}
                 </p>
