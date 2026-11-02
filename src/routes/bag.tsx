@@ -53,7 +53,7 @@ function BagPage() {
                   {line.product.name}
                 </Link>
                 <p className="mt-1 text-xs text-mute">
-                  {line.size ? `Size: ${line.size} · ` : ""}{line.colour ? `Colour: ${line.colour} · ` : ""}{line.product.size}
+                  {line.size ? `Size: ${line.size} · ` : ""}{line.product.size}
                   {" · "}
                   {line.product.landed ? "Ready in Dhaka" : "From the house"}
                 </p>
@@ -61,8 +61,8 @@ function BagPage() {
                   <Price price={line.product.price} compareAt={line.product.compareAt} />
                 </div>
                 <div className="mt-3 flex items-center justify-between gap-3">
-                  <Qty value={line.qty} onChange={(n) => setQty(line.slug, n, line.size, line.colour)} />
-                  <button type="button" className="text-xs tracking-widest text-mute uppercase" onClick={() => remove(line.slug, line.size, line.colour)}>
+                  <Qty value={line.qty} onChange={(n) => setQty(line.slug, n, line.size)} />
+                  <button type="button" className="text-xs tracking-widest text-mute uppercase" onClick={() => remove(line.slug, line.size)}>
                     Remove
                   </button>
                 </div>
