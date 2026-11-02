@@ -154,6 +154,7 @@ function CheckoutPage() {
             {payMethods.map((method) => {
               const disabled = method.id === "cod" && !allLanded;
               const active = draft.pay === method.id;
+              const quiet = method.id === "cod";
               return (
                 <label
                   key={method.id}
@@ -167,13 +168,25 @@ function CheckoutPage() {
                       disabled={disabled}
                       onChange={() => set("pay", method.id)}
                     />
-                    <span className="text-sm">{method.name}</span>
+                    <span className={`text-sm ${quiet ? "text-ink-soft" : ""}`}>{method.name}</span>
+                    {method.recommended ? (
+                      <span className="ml-auto text-[11px] tracking-widest text-pine uppercase">Recommended</span>
+                    ) : null}
                   </span>
+                  {method.benefit ? <span className="mt-1 block pl-6 text-xs text-pine">{method.benefit}</span> : null}
                   <span className="mt-1 block pl-6 text-xs text-mute">{method.line}</span>
+                  {quiet ? (
+                    <span className="mt-2 block pl-6 text-xs text-mute">
+                      Delivery charge must be paid in advance. The desk confirms your order before it ships.
+                    </span>
+                  ) : null}
                 </label>
               );
             })}
           </div>
+          {draft.pay === "bkash" || draft.pay === "nagad" ? (
+            <p className="mt-3 text-xs text-pine">Delivery is complimentary with online payment.</p>
+          ) : null}
           {errors.pay ? <p className="mt-2 text-sm text-brick">{errors.pay}</p> : null}
         </fieldset>
 

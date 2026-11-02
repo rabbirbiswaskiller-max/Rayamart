@@ -217,16 +217,25 @@ export const cities = [
 
 export type PayMethod = "bkash" | "nagad" | "card" | "cod";
 
-export const payMethods: { id: PayMethod; name: string; line: string }[] = [
+export const payMethods: {
+  id: PayMethod;
+  name: string;
+  line: string;
+  benefit?: string;
+  recommended?: boolean;
+}[] = [
   {
     id: "bkash",
     name: "bKash",
-    line: "We send a payment note after the desk confirms the piece.",
+    line: "Online payment confirms your order immediately and includes complimentary delivery.",
+    benefit: "Free delivery · Instant confirmation",
+    recommended: true,
   },
   {
     id: "nagad",
     name: "Nagad",
-    line: "Same as bKash — nothing is taken before we call.",
+    line: "Online payment confirms your order immediately and includes complimentary delivery.",
+    benefit: "Free delivery · Instant confirmation",
   },
   {
     id: "cod",
