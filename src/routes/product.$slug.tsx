@@ -39,13 +39,7 @@ function ProductPage() {
   const navigate = useNavigate();
   const [qty, setQty] = useState(1);
   const [selectedSize, setSelectedSize] = useState("");
-  const [selectedColour, setSelectedColour] = useState("");
-  const [activeImage, setActiveImage] = useState("");
-  const gallery = product.colors?.length ? (product.colors.find((color) => color.name === selectedColour)?.images ?? []) : [];
-  const images = gallery.length ? gallery : product.image ? [product.image] : [];
-  const mainImage = activeImage && images.includes(activeImage) ? activeImage : images[0] || product.image;
   const needsSize = Boolean(product.sizes?.length);
-  const needsColour = Boolean(product.colors?.length);
   const [saved, setSaved] = useState(wishlist.slugs.includes(product.slug));
   const [wishBusy, setWishBusy] = useState(false);
   const related = relatedTo(product.slug, products);
@@ -73,8 +67,7 @@ function ProductPage() {
     <div>
       <div className="mx-auto grid max-w-6xl gap-8 px-4 py-8 sm:px-6 lg:grid-cols-2 lg:gap-14 lg:py-12">
         <div className="bg-paper-2">
-          <img src={mainImage} alt={product.alt} className="aspect-square w-full object-cover" />
-          {images.length > 1 ? <div className="flex gap-2 overflow-x-auto p-3">{images.map((image, index) => <button key={`${image}-${index}`} type="button" onClick={() => setActiveImage(image)} className={`size-16 shrink-0 overflow-hidden border ${mainImage === image ? "border-pine" : "border-line"}`} aria-label={`View image ${index + 1}`}><img src={image} alt="" className="size-full object-cover" /></button>)}</div> : null}
+          <img src={product.image} alt={product.alt} className="aspect-square w-full object-cover" />
         </div>
         <div>
           <p className="text-xs tracking-widest text-mute uppercase">
@@ -102,7 +95,6 @@ function ProductPage() {
               : "Requested from the house. Allow 7–12 days, tracked the whole way."}
           </p>
           {needsSize ? <fieldset className="mt-6"><legend className="text-xs tracking-widest text-mute uppercase">Size</legend><div className="mt-2 flex flex-wrap gap-2">{product.sizes!.map((size) => <button key={size} type="button" onClick={() => setSelectedSize(size)} className={`min-w-11 border px-3 py-2 text-sm ${selectedSize === size ? "border-pine bg-pine text-ivory" : "border-line"}`}>{size}</button>)}</div></fieldset> : null}
-          {needsColour ? <fieldset className="mt-5"><legend className="text-xs tracking-widest text-mute uppercase">Colour</legend><div className="mt-2 flex flex-wrap gap-2">{product.colors!.map((color) => <button key={color.name} type="button" onClick={() => { setSelectedColour(color.name); setActiveImage(color.images[0] || product.image); }} className={`border px-3 py-2 text-sm ${selectedColour === color.name ? "border-pine bg-pine text-ivory" : "border-line"}`}>{color.name}</button>)}</div></fieldset> : null}
           <div className="mt-8 flex flex-wrap items-center gap-3">
             <Qty value={qty} onChange={(n) => setQty(Math.max(1, Math.min(8, n)))} />
             <button
@@ -110,14 +102,13 @@ function ProductPage() {
               className="inline-flex h-12 flex-1 items-center justify-center bg-pine px-6 text-sm text-ivory hover:bg-pine-deep sm:flex-none"
               onClick={() => {
                 if (needsSize && !selectedSize) { toast.error("Choose a size"); return; }
-                if (needsColour && !selectedColour) { toast.error("Choose a colour"); return; }
-                add(product, qty, selectedSize || undefined, selectedColour || undefined);
+                add(product, qty, selectedSize || undefined);
                 toast(product.name, { description: `${qty} placed in your bag.` });
               }}
             >
               Add to bag
             </button>
-            {(needsSize && !selectedSize) || (needsColour && !selectedColour) ? <p className="w-full text-xs text-brick">{needsSize && !selectedSize ? "Choose a size" : "Choose a colour"}</p> : null}
+            {needsSize && !selectedSize ? <p className="w-full text-xs text-brick">Choose a size</p> : null}
             <button
               type="button"
               disabled={wishBusy}
