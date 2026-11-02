@@ -27,6 +27,8 @@ export function readRef(): string | undefined {
   try {
     const raw = window.localStorage.getItem(KEY);
     if (!raw) return undefined;
+    // Visits from before the 30-day change stored the bare code; keep honouring it.
+    if (REF_PATTERN.test(raw)) return raw;
     const saved = JSON.parse(raw) as { ref?: unknown; expires?: unknown };
     if (typeof saved.ref !== "string" || typeof saved.expires !== "number") return undefined;
     if (saved.expires < Date.now() || !REF_PATTERN.test(saved.ref)) {
