@@ -60,6 +60,8 @@ function validateProduct(input: unknown): Product {
   if (!Array.isArray(p.notes) || p.notes.some((n) => typeof n !== "string")) throw new Error("Product notes must be a list.");
   const sizes = Array.isArray(p.sizes) ? [...new Set(p.sizes.map((s) => String(s).trim()).filter(Boolean))] : undefined;
   const colors = Array.isArray(p.colors) ? p.colors.map((color) => ({ name: String(color.name ?? "").trim(), images: Array.isArray(color.images) ? color.images.map(String).filter(Boolean).slice(0, 100) : [] })).filter((color) => color.name) : undefined;
+  if (Array.isArray(p.colors) && colors && colors.length !== p.colors.length) throw new Error("প্রতিটি রঙের নাম লিখতে হবে।");
+  if (colors && new Set(colors.map((color) => color.name.toLowerCase())).size !== colors.length) throw new Error("প্রতিটি রঙের নাম আলাদা হতে হবে।");
   return {
     slug: p.slug!.trim(), name: p.name!.trim(), house: p.house!.trim(),
     category: p.category!.trim(), origin: p.origin!.trim(), price: Number(p.price),
@@ -99,7 +101,8 @@ export const saveStoreProduct = createServerFn({ method: "POST" })
   .inputValidator((data: { product: Product }) => data)
   .handler(async ({ data }) => {
     await assertAdmin();
-    const product = validateProduct(data.product);
+    const incomingProduct = data.product as Product;
+    const product = validateProduct({ ...incomingProduct, image: incomingProduct.colors?.[0]?.images?.[0] || incomingProduct.image });
     const sql = await getSql();
     // Keep cost and active flag already stored, unless this save sends new values.
     const existing = await sql.query<{ data: Product }>("SELECT data FROM raya_products WHERE slug = $1 LIMIT 1", [product.slug]);
