@@ -58,6 +58,8 @@ function validateProduct(input: unknown): Product {
   if (!Number.isFinite(p.reviews) || Number(p.reviews) < 0) throw new Error("Reviews must be zero or greater.");
   if (!Number.isFinite(p.featured)) throw new Error("Display order must be a number.");
   if (!Array.isArray(p.notes) || p.notes.some((n) => typeof n !== "string")) throw new Error("Product notes must be a list.");
+  const sizes = Array.isArray(p.sizes) ? [...new Set(p.sizes.map((s) => String(s).trim()).filter(Boolean))] : undefined;
+  const colors = Array.isArray(p.colors) ? p.colors.map((color) => ({ name: String(color.name ?? "").trim(), images: Array.isArray(color.images) ? color.images.map(String).filter(Boolean).slice(0, 100) : [] })).filter((color) => color.name) : undefined;
   return {
     slug: p.slug!.trim(), name: p.name!.trim(), house: p.house!.trim(),
     category: p.category!.trim(), origin: p.origin!.trim(), price: Number(p.price),
@@ -66,6 +68,8 @@ function validateProduct(input: unknown): Product {
     image: p.image!.trim(), alt: p.alt!.trim(), flash: Boolean(p.flash),
     landed: Boolean(p.landed), featured: Number(p.featured ?? 0), size: p.size!.trim(),
     blurb: p.blurb!.trim(), story: p.story!.trim(),
+    ...(sizes?.length ? { sizes } : {}),
+    ...(colors?.length ? { colors } : {}),
     notes: p.notes.map((n) => String(n).trim()).filter(Boolean),
   };
 }
@@ -103,6 +107,7 @@ export const saveStoreProduct = createServerFn({ method: "POST" })
     const incoming = data.product as Partial<Product>;
     const merged: Product = {
       ...product,
+      ...(product.colors?.length && product.colors[0]?.images[0] ? { image: product.colors[0].images[0] } : {}),
       cost: typeof incoming.cost === "number" ? incoming.cost : prev?.cost,
       active: typeof incoming.active === "boolean" ? incoming.active : (prev?.active ?? true),
     };
