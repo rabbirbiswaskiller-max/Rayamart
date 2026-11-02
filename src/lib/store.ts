@@ -59,7 +59,7 @@ export const useCart = create<CartState>()(
         });
       },
       setQty: (slug, qty, size) => {
-        const key = cartLineKey({ slug, size, colour });
+        const key = cartLineKey({ slug, size });
         if (qty <= 0) {
           set((state) => ({ items: state.items.filter((i) => cartLineKey(i) !== key) }));
           return;
@@ -71,7 +71,7 @@ export const useCart = create<CartState>()(
         }));
       },
       remove: (slug, size) => {
-        const key = cartLineKey({ slug, size, colour });
+        const key = cartLineKey({ slug, size });
         set((state) => ({ items: state.items.filter((i) => cartLineKey(i) !== key) }));
       },
       clear: () => set({ items: [] }),
