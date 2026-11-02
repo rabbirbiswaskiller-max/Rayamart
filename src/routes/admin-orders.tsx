@@ -230,7 +230,7 @@ function PrintSheet({ order }: { order: AdminOrderRow }) {
       <p className="mt-4 font-medium">প্রোডাক্ট</p>
       <ul>
         {order.lines.map((l) => (
-          <li key={l.slug}>{l.name} × {l.qty} — {taka(l.price * l.qty)}</li>
+          <li key={`${l.slug}|${l.size ?? ""}|${l.colour ?? ""}`}>{l.name}{l.size ? ` · Size: ${l.size}` : ""}{l.colour ? ` · Colour: ${l.colour}` : ""} × {l.qty} — {taka(l.price * l.qty)}</li>
         ))}
       </ul>
       <p className="mt-4">মোট: {taka(order.total)} · পেমেন্ট: {payName(order.customer.pay)}</p>
