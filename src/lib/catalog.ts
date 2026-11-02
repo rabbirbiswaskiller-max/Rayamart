@@ -257,3 +257,45 @@ export function getProduct(slug: string) {
 }
 
 export type ShopQuery = {
+  q?: string;
+  cat?: string;
+  house?: string;
+  sort?: "price-asc" | "price-desc" | "rating";
+  ready?: "1";
+};
+
+export function filterProducts(query: ShopQuery, sourceProducts: Product[] = products) {
+  let list = sourceProducts.slice();
+  if (query.cat) list = list.filter((p) => p.category === query.cat);
+  if (query.house) list = list.filter((p) => p.house === query.house);
+  if (query.ready === "1") list = list.filter((p) => p.landed);
+  if (query.q) {
+    const s = query.q.trim().toLowerCase();
+    list = list.filter((p) => {
+      const house = houseBy(p.house)?.name ?? "";
+      const cat = categoryBy(p.category)?.name ?? "";
+      return [p.name, p.blurb, p.origin, p.notes.join(" "), house, cat]
+        .join(" ")
+        .toLowerCase()
+        .includes(s);
+    });
+  }
+  if (query.sort === "price-asc") list.sort((a, b) => a.price - b.price);
+  else if (query.sort === "price-desc") list.sort((a, b) => b.price - a.price);
+  else if (query.sort === "rating")
+    list.sort((a, b) => b.rating - a.rating || b.reviews - a.reviews);
+  else list.sort((a, b) => a.featured - b.featured);
+  return list;
+}
+
+export function relatedTo(slug: string, sourceProducts: Product[] = products) {
+  const current = sourceProducts.find((p) => p.slug === slug);
+  if (!current) return [];
+  const same = sourceProducts.filter(
+    (p) => p.slug !== slug && p.category === current.category,
+  );
+  const rest = sourceProducts.filter(
+    (p) => p.slug !== slug && p.category !== current.category,
+  );
+  return [...same, ...rest].slice(0, 4);
+}
