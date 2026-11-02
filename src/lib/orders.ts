@@ -11,7 +11,7 @@ type Customer = {
   note: string;
 };
 // cost = what we paid the house for this line, copied at order time.
-type OrderLine = { slug: string; name: string; qty: number; price: number; image: string; cost?: number };
+type OrderLine = { slug: string; name: string; qty: number; price: number; image: string; size?: string; colour?: string; cost?: number };
 export type StoredOrder = {
   id: string;
   createdAt: string;
@@ -55,7 +55,7 @@ export async function expireStaleOrders(): Promise<void> {
 }
 
 export const createCustomerOrder = createServerFn({ method: "POST" })
-  .inputValidator((data: { customer: Customer; items: { slug: string; qty: number }[]; ref?: string }) => data)
+  .inputValidator((data: { customer: Customer; items: { slug: string; qty: number; size?: string; colour?: string }[]; ref?: string }) => data)
   .handler(async ({ data }): Promise<{ id: string }> => {
     const customer = data.customer;
     if (!customer || customer.name.trim().length < 2) throw new Error("নাম সঠিকভাবে লিখো।");
@@ -75,12 +75,19 @@ export const createCustomerOrder = createServerFn({ method: "POST" })
       const product = rows[0]?.data;
       if (!product) throw new Error("একটি প্রোডাক্ট আর পাওয়া যাচ্ছে না। পেজ রিফ্রেশ করে আবার চেষ্টা করো।");
       if (product.active === false) throw new Error("একটি প্রোডাক্ট এখন পাওয়া যাচ্ছে না। কার্ট থেকে সরিয়ে আবার চেষ্টা করো।");
+      const hasSizes = Array.isArray(product.sizes) && product.sizes.length > 0;
+      const hasColors = Array.isArray(product.colors) && product.colors.length > 0;
+      if (hasSizes ? (!item.size || !product.sizes!.includes(item.size)) : item.size !== undefined) throw new Error("প্রোডাক্টের সাইজ সঠিক নয়।");
+      const selectedColor = hasColors ? product.colors!.find((color) => color.name === item.colour) : undefined;
+      if (hasColors ? (!item.colour || !selectedColor) : item.colour !== undefined) throw new Error("প্রোডাক্টের রং সঠিক নয়।");
       lines.push({
         slug: product.slug,
         name: product.name,
         qty: item.qty,
         price: Number(product.price),
-        image: product.image,
+        image: selectedColor?.images[0] || product.image,
+        ...(item.size ? { size: item.size } : {}),
+        ...(item.colour ? { colour: item.colour } : {}),
         cost: typeof product.cost === "number" ? product.cost : undefined,
       });
     }
