@@ -168,7 +168,7 @@ function OrderCard({ order, onPrint }: { order: AdminOrderRow; onPrint: () => vo
               <p className="text-xs tracking-widest text-mute uppercase">প্রোডাক্ট</p>
               <ul className="mt-1 space-y-1 text-sm">
                 {order.lines.map((l) => (
-                  <li key={`${l.slug}|${l.size ?? ""}|${l.colour ?? ""}`}>{l.name}{l.size ? ` · Size: ${l.size}` : ""}{l.colour ? ` · Colour: ${l.colour}` : ""} × {l.qty} — {taka(l.price * l.qty)}</li>
+                  <li key={`${l.slug}|${l.size ?? ""}`}>{l.name}{l.size ? ` · Size: ${l.size}` : ""} × {l.qty} — {taka(l.price * l.qty)}</li>
                 ))}
               </ul>
               <div className="mt-3 space-y-1 text-xs text-mute">
