@@ -9,13 +9,13 @@ import {
   type PayMethod,
 } from "@/lib/catalog";
 
-export type CartLine = { slug: string; qty: number; product?: Product; size?: string; colour?: string };
-export function cartLineKey(line: Pick<CartLine, "slug" | "size" | "colour">) { return `${line.slug}|${line.size ?? ""}|${line.colour ?? ""}`; }
+export type CartLine = { slug: string; qty: number; product?: Product; size?: string };
+export function cartLineKey(line: Pick<CartLine, "slug" | "size">) { return `${line.slug}|${line.size ?? ""}`; }
 
 export type OrderRecord = {
   id: string;
   createdAt: string;
-  lines: { slug: string; name: string; qty: number; price: number; image: string; size?: string; colour?: string }[];
+  lines: { slug: string; name: string; qty: number; price: number; image: string; size?: string }[];
   subtotal: number;
   discount?: number;
   shipping: number;
@@ -35,9 +35,9 @@ export type OrderRecord = {
 type CartState = {
   items: CartLine[];
   orders: OrderRecord[];
-  add: (product: Product | string, qty?: number, size?: string, colour?: string) => void;
-  setQty: (slug: string, qty: number, size?: string, colour?: string) => void;
-  remove: (slug: string, size?: string, colour?: string) => void;
+  add: (product: Product | string, qty?: number, size?: string) => void;
+  setQty: (slug: string, qty: number, size?: string) => void;
+  remove: (slug: string, size?: string) => void;
   clear: () => void;
   placeOrder: (customer: OrderRecord["customer"]) => string | null;
 };
@@ -47,19 +47,19 @@ export const useCart = create<CartState>()(
     (set, get) => ({
       items: [],
       orders: [],
-      add: (productOrSlug, qty = 1, size, colour) => {
+      add: (productOrSlug, qty = 1, size) => {
         const product = typeof productOrSlug === "string" ? getProduct(productOrSlug) : productOrSlug;
         if (!product) return;
         const slug = product.slug;
         set((state) => {
-          const key = cartLineKey({ slug, size, colour });
+          const key = cartLineKey({ slug, size });
           const existing = state.items.find((i) => cartLineKey(i) === key);
-          if (!existing) return { items: [...state.items, { slug, qty, product, ...(size ? { size } : {}), ...(colour ? { colour } : {}) }] };
+          if (!existing) return { items: [...state.items, { slug, qty, product, ...(size ? { size } : {}) }] };
           return { items: state.items.map((i) => cartLineKey(i) === key ? { ...i, qty: Math.min(8, i.qty + qty) } : i) };
         });
       },
-      setQty: (slug, qty, size, colour) => {
-        const key = cartLineKey({ slug, size, colour });
+      setQty: (slug, qty, size) => {
+        const key = cartLineKey({ slug, size });
         if (qty <= 0) {
           set((state) => ({ items: state.items.filter((i) => cartLineKey(i) !== key) }));
           return;
@@ -70,8 +70,8 @@ export const useCart = create<CartState>()(
           ),
         }));
       },
-      remove: (slug, size, colour) => {
-        const key = cartLineKey({ slug, size, colour });
+      remove: (slug, size) => {
+        const key = cartLineKey({ slug, size });
         set((state) => ({ items: state.items.filter((i) => cartLineKey(i) !== key) }));
       },
       clear: () => set({ items: [] }),
@@ -85,9 +85,8 @@ export const useCart = create<CartState>()(
               name: product.name,
               qty: item.qty,
               price: product.price,
-              image: item.colour ? (product.colors?.find((color) => color.name === item.colour)?.images[0] || product.image) : product.image,
+              image: product.image,
               ...(item.size ? { size: item.size } : {}),
-              ...(item.colour ? { colour: item.colour } : {}),
             };
           })
           .filter((line): line is OrderRecord["lines"][number] => line !== null);
@@ -132,7 +131,7 @@ export function useCartDetailed() {
     .map((item) => {
       const product = item.product ?? getProduct(item.slug);
       if (!product) return null;
-      return { ...item, product, image: item.colour ? (product.colors?.find((color) => color.name === item.colour)?.images[0] || product.image) : product.image };
+      return { slug: item.slug, qty: item.qty, product, image: product.image, ...(item.size ? { size: item.size } : {}) };
     })
     .filter((line): line is NonNullable<typeof line> =>
       line !== null,
