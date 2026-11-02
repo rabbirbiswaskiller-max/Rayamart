@@ -137,6 +137,8 @@ export type Product = {
   landed: boolean;
   featured: number;
   size: string;
+  sizes?: string[];
+  colors?: { name: string; images: string[] }[];
   blurb: string;
   story: string;
   notes: string[];
