@@ -111,6 +111,25 @@ export const listPartnerApplications = createServerFn({ method: "GET" })
     return rows.map((row) => toRecord(row.id, row.data));
   });
 
+type Sql = Awaited<ReturnType<typeof getSql>>;
+const CODE_ALPHABET = "23456789ABCDEFGHJKLMNPQRSTUVWXYZ";
+
+// A new partner code like RAYA-7K2M (stored lowercase; links are case-insensitive).
+// Tries again if the code is already used by another partner.
+async function newUniqueCode(sql: Sql, id: string): Promise<string> {
+  for (let attempt = 0; attempt < 10; attempt++) {
+    const bytes = crypto.getRandomValues(new Uint8Array(4));
+    const suffix = Array.from(bytes, (b) => CODE_ALPHABET[b % CODE_ALPHABET.length]).join("");
+    const code = `raya-${suffix.toLowerCase()}`;
+    const taken = await sql.query<{ id: string }>(
+      "SELECT id FROM raya_partners WHERE data->>'code' = $1 AND id <> $2 LIMIT 1",
+      [code, id],
+    );
+    if (!taken[0]) return code;
+  }
+  throw new Error("কোড তৈরি করা যায়নি। আবার চেষ্টা করো।");
+}
+
 // Admin: approve with a partner code (unique), or reject.
 export const reviewPartner = createServerFn({ method: "POST" })
   .inputValidator((data: { id: string; action: "approve" | "reject"; code?: string }) => data)
@@ -121,9 +140,10 @@ export const reviewPartner = createServerFn({ method: "POST" })
     if (data.action === "reject") {
       patch = { status: "rejected" };
     } else {
-      const code = String(data.code || "").trim().toLowerCase();
-      if (!CODE_PATTERN.test(code)) throw new Error("কোড: ছোট হাতের ইংরেজি অক্ষর, সংখ্যা ও হাইফেন (২-৪০ অক্ষর)।");
       const sql = await getSql();
+      let code = String(data.code || "").trim().toLowerCase();
+      if (!code) code = await newUniqueCode(sql, data.id);
+      if (!CODE_PATTERN.test(code)) throw new Error("কোড: ছোট হাতের ইংরেজি অক্ষর, সংখ্যা ও হাইফেন (২-৪০ অক্ষর)।");
       const taken = await sql.query<{ id: string }>(
         "SELECT id FROM raya_partners WHERE data->>'code' = $1 AND id <> $2 LIMIT 1",
         [code, data.id],
