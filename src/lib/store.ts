@@ -9,12 +9,13 @@ import {
   type PayMethod,
 } from "@/lib/catalog";
 
-export type CartLine = { slug: string; qty: number; product?: Product };
+export type CartLine = { slug: string; qty: number; product?: Product; size?: string; colour?: string };
+export function cartLineKey(line: Pick<CartLine, "slug" | "size" | "colour">) { return `${line.slug}|${line.size ?? ""}|${line.colour ?? ""}`; }
 
 export type OrderRecord = {
   id: string;
   createdAt: string;
-  lines: { slug: string; name: string; qty: number; price: number; image: string }[];
+  lines: { slug: string; name: string; qty: number; price: number; image: string; size?: string; colour?: string }[];
   subtotal: number;
   discount?: number;
   shipping: number;
@@ -34,9 +35,9 @@ export type OrderRecord = {
 type CartState = {
   items: CartLine[];
   orders: OrderRecord[];
-  add: (product: Product | string, qty?: number) => void;
-  setQty: (slug: string, qty: number) => void;
-  remove: (slug: string) => void;
+  add: (product: Product | string, qty?: number, size?: string, colour?: string) => void;
+  setQty: (slug: string, qty: number, size?: string, colour?: string) => void;
+  remove: (slug: string, size?: string, colour?: string) => void;
   clear: () => void;
   placeOrder: (customer: OrderRecord["customer"]) => string | null;
 };
@@ -46,33 +47,33 @@ export const useCart = create<CartState>()(
     (set, get) => ({
       items: [],
       orders: [],
-      add: (productOrSlug, qty = 1) => {
+      add: (productOrSlug, qty = 1, size, colour) => {
         const product = typeof productOrSlug === "string" ? getProduct(productOrSlug) : productOrSlug;
         if (!product) return;
         const slug = product.slug;
         set((state) => {
-          const existing = state.items.find((i) => i.slug === slug);
-          if (!existing) return { items: [...state.items, { slug, qty, product }] };
-          return {
-            items: state.items.map((i) =>
-              i.slug === slug ? { ...i, qty: Math.min(8, i.qty + qty) } : i,
-            ),
-          };
+          const key = cartLineKey({ slug, size, colour });
+          const existing = state.items.find((i) => cartLineKey(i) === key);
+          if (!existing) return { items: [...state.items, { slug, qty, product, ...(size ? { size } : {}), ...(colour ? { colour } : {}) }] };
+          return { items: state.items.map((i) => cartLineKey(i) === key ? { ...i, qty: Math.min(8, i.qty + qty) } : i) };
         });
       },
-      setQty: (slug, qty) => {
+      setQty: (slug, qty, size, colour) => {
+        const key = cartLineKey({ slug, size, colour });
         if (qty <= 0) {
-          set((state) => ({ items: state.items.filter((i) => i.slug !== slug) }));
+          set((state) => ({ items: state.items.filter((i) => cartLineKey(i) !== key) }));
           return;
         }
         set((state) => ({
           items: state.items.map((i) =>
-            i.slug === slug ? { ...i, qty: Math.min(8, qty) } : i,
+            cartLineKey(i) === key ? { ...i, qty: Math.min(8, qty) } : i,
           ),
         }));
       },
-      remove: (slug) =>
-        set((state) => ({ items: state.items.filter((i) => i.slug !== slug) })),
+      remove: (slug, size, colour) => {
+        const key = cartLineKey({ slug, size, colour });
+        set((state) => ({ items: state.items.filter((i) => cartLineKey(i) !== key) }));
+      },
       clear: () => set({ items: [] }),
       placeOrder: (customer) => {
         const lines = get()
@@ -84,7 +85,9 @@ export const useCart = create<CartState>()(
               name: product.name,
               qty: item.qty,
               price: product.price,
-              image: product.image,
+              image: item.colour ? (product.colors?.find((color) => color.name === item.colour)?.images[0] || product.image) : product.image,
+              ...(item.size ? { size: item.size } : {}),
+              ...(item.colour ? { colour: item.colour } : {}),
             };
           })
           .filter((line): line is OrderRecord["lines"][number] => line !== null);
@@ -129,9 +132,9 @@ export function useCartDetailed() {
     .map((item) => {
       const product = item.product ?? getProduct(item.slug);
       if (!product) return null;
-      return { ...item, product };
+      return { ...item, product, image: item.colour ? (product.colors?.find((color) => color.name === item.colour)?.images[0] || product.image) : product.image };
     })
-    .filter((line): line is { slug: string; qty: number; product: NonNullable<ReturnType<typeof getProduct>> } =>
+    .filter((line): line is NonNullable<typeof line> =>
       line !== null,
     );
   const subtotal = lines.reduce((sum, line) => sum + line.product.price * line.qty, 0);

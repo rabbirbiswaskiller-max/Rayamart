@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { FREE_OVER, taka } from "@/lib/catalog";
 import { Qty, Price } from "@/components/commerce";
-import { useCart, useCartDetailed } from "@/lib/store";
+import { cartLineKey, useCart, useCartDetailed } from "@/lib/store";
 
 export const Route = createFileRoute("/bag")({
   head: () => ({ meta: [{ title: "Your bag — Raya Mart" }] }),
@@ -44,16 +44,16 @@ function BagPage() {
         </div>
         <ul className="mt-6 divide-y divide-line border-y border-line">
           {lines.map((line) => (
-            <li key={line.slug} className="flex gap-4 py-5">
+            <li key={cartLineKey(line)} className="flex gap-4 py-5">
               <Link to="/product/$slug" params={{ slug: line.slug }} className="block w-24 shrink-0 bg-paper-2 sm:w-28">
-                <img src={line.product.image} alt="" className="aspect-square w-full object-cover" />
+                <img src={line.image} alt="" className="aspect-square w-full object-cover" />
               </Link>
               <div className="flex min-w-0 flex-1 flex-col">
                 <Link to="/product/$slug" params={{ slug: line.slug }} className="font-serif text-2xl leading-tight">
                   {line.product.name}
                 </Link>
                 <p className="mt-1 text-xs text-mute">
-                  {line.product.size}
+                  {line.size ? `Size: ${line.size} · ` : ""}{line.colour ? `Colour: ${line.colour} · ` : ""}{line.product.size}
                   {" · "}
                   {line.product.landed ? "Ready in Dhaka" : "From the house"}
                 </p>
@@ -61,8 +61,8 @@ function BagPage() {
                   <Price price={line.product.price} compareAt={line.product.compareAt} />
                 </div>
                 <div className="mt-3 flex items-center justify-between gap-3">
-                  <Qty value={line.qty} onChange={(n) => setQty(line.slug, n)} />
-                  <button type="button" className="text-xs tracking-widest text-mute uppercase" onClick={() => remove(line.slug)}>
+                  <Qty value={line.qty} onChange={(n) => setQty(line.slug, n, line.size, line.colour)} />
+                  <button type="button" className="text-xs tracking-widest text-mute uppercase" onClick={() => remove(line.slug, line.size, line.colour)}>
                     Remove
                   </button>
                 </div>

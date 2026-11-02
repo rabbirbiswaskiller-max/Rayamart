@@ -83,7 +83,7 @@ function CheckoutPage() {
     try {
       const result = await createCustomerOrder({ data: {
         customer: { ...draft, phone, name: draft.name.trim(), address: draft.address.trim() },
-        items: lines.map((line) => ({ slug: line.slug, qty: line.qty })),
+        items: lines.map((line) => ({ slug: line.slug, qty: line.qty, ...(line.size ? { size: line.size } : {}), ...(line.colour ? { colour: line.colour } : {}) })),
         ref: readRef(),
       } });
       navigate({ to: "/order/$id", params: { id: result.id } });
@@ -209,11 +209,11 @@ function CheckoutPage() {
         <h2 className="font-serif text-3xl">In this request</h2>
         <ul className="mt-4 divide-y divide-line">
           {lines.map((line) => (
-            <li key={line.slug} className="flex gap-3 py-3">
-              <img src={line.product.image} alt="" className="size-16 object-cover" />
+            <li key={`${line.slug}|${line.size ?? ""}|${line.colour ?? ""}`} className="flex gap-3 py-3">
+              <img src={line.image} alt="" className="size-16 object-cover" />
               <div className="min-w-0 flex-1">
                 <p className="font-serif text-xl leading-tight">{line.product.name}</p>
-                <p className="text-xs text-mute">× {line.qty}</p>
+                <p className="text-xs text-mute">{line.size ? `Size: ${line.size} · ` : ""}{line.colour ? `Colour: ${line.colour} · ` : ""}× {line.qty}</p>
               </div>
               <p className="text-sm tabular-nums">{taka(line.product.price * line.qty)}</p>
             </li>

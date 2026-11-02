@@ -323,7 +323,7 @@ function OrderItem({ order: o }: { order: AccountOrder }) {
         <dl className="mt-3 space-y-1 border-t border-line pt-3 text-sm">
           {o.lines.map((l, i) => (
             <div key={i} className="flex justify-between gap-3">
-              <dt>{l.name} × {l.qty}</dt>
+              <dt>{l.name}{l.size ? ` · Size: ${l.size}` : ""}{l.colour ? ` · Colour: ${l.colour}` : ""} × {l.qty}</dt>
               <dd className="tabular-nums">{taka(l.price * l.qty)}</dd>
             </div>
           ))}

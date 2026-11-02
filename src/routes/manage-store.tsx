@@ -69,6 +69,7 @@ function ManageStore() {
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [savingProduct, setSavingProduct] = useState(false);
   const [uploadingImage, setUploadingImage] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState("");
 
   async function checkAccess() {
     try {
@@ -148,6 +149,30 @@ function ManageStore() {
     } finally {
       setUploadingImage(false);
     }
+  }
+
+  async function handleColourFiles(index: number, files: FileList | null) {
+    if (!files?.length || !editingProduct) return;
+    const selected = Array.from(files);
+    const currentCount = editingProduct.colors?.[index]?.images.length ?? 0;
+    if (currentCount + selected.length > 100) { setError("প্রতি রঙে সর্বোচ্চ ১০০টি ছবি রাখা যাবে।"); return; }
+    setError("");
+    setUploadingImage(true);
+    try {
+      for (let i = 0; i < selected.length; i += 1) {
+        setUploadProgress("রঙের ছবি আপলোড হচ্ছে… " + (i + 1) + "/" + selected.length);
+        const prepared = await compressProductImage(selected[i]);
+        const result = await uploadStoreImage({ data: prepared });
+        setEditingProduct((current) => {
+          if (!current) return current;
+          const colors = [...(current.colors ?? [])];
+          if (!colors[index]) return current;
+          colors[index] = { ...colors[index], images: [...colors[index].images, result.url] };
+          return { ...current, colors };
+        });
+      }
+    } catch (err) { setError(err instanceof Error ? err.message : "ছবি আপলোড করা যায়নি।"); }
+    finally { setUploadingImage(false); setUploadProgress(""); }
   }
 
   const filteredProducts = useMemo(() => {
@@ -416,7 +441,22 @@ function ManageStore() {
                       <AdminField label="Brand house slug (e.g. lumiere)" value={editingProduct.house} onChange={v => setEditingProduct({...editingProduct,house:slugify(v)})} required />
                       <AdminField label="Origin" value={editingProduct.origin} onChange={v => setEditingProduct({...editingProduct,origin:v})} required />
                       <AdminField label="Size / quantity" value={editingProduct.size} onChange={v => setEditingProduct({...editingProduct,size:v})} required />
-                      <div className="grid gap-2 rounded-xl border border-dashed border-[#cfc8b9] bg-[#fbfaf6] p-3"><label className="grid gap-2 text-xs font-medium text-[#55574e]">Product photo — ফোনের Gallery থেকে বেছে নাও<input type="file" accept="image/jpeg,image/png,image/webp,image/gif" onChange={e => void handleImageFile(e.target.files?.[0])} disabled={uploadingImage} className="block w-full min-w-0 text-sm file:mr-3 file:rounded-lg file:border-0 file:bg-[#1c3d34] file:px-3 file:py-2 file:font-semibold file:text-white disabled:opacity-60" /></label><p className="text-xs leading-5 text-[#777268]">{uploadingImage ? "ছবি ছোট করা ও আপলোড হচ্ছে…" : editingProduct.image ? "ছবি আপলোড হয়েছে। চাইলে নতুন ছবি বেছে বদলাতে পারো।" : "JPG, PNG, WEBP বা GIF। বড় ছবি স্বয়ংক্রিয়ভাবে ছোট করা হবে।"}</p>{editingProduct.image && <img src={editingProduct.image} alt={editingProduct.alt || editingProduct.name || "Product preview"} className="max-h-48 w-full rounded-lg bg-white object-contain" />}<input type="hidden" value={editingProduct.image} required readOnly aria-label="Uploaded image URL" /></div>
+                      <div className="grid gap-3 rounded-xl border border-[#e5dfd3] bg-[#fbfaf6] p-3 sm:col-span-2">
+                        <p className="text-xs font-semibold text-[#55574e]">Available clothing sizes (optional)</p>
+                        <div className="flex flex-wrap gap-4">{["XS", "S", "M", "L", "XL", "XXL"].map(size => <label key={size} className="flex items-center gap-2 text-sm"><input type="checkbox" checked={Boolean(editingProduct.sizes?.includes(size))} onChange={e => setEditingProduct({...editingProduct, sizes: e.target.checked ? [...new Set([...(editingProduct.sizes ?? []), size])] : (editingProduct.sizes ?? []).filter(value => value !== size)})} />{size}</label>)}</div>
+                        <AdminField label="অন্যান্য সাইজ (কমা দিয়ে লিখো)" value={(editingProduct.sizes ?? []).filter(size => !["XS", "S", "M", "L", "XL", "XXL"].includes(size)).join(", ")} onChange={value => setEditingProduct({...editingProduct, sizes: [...new Set([...(editingProduct.sizes ?? []).filter(size => ["XS", "S", "M", "L", "XL", "XXL"].includes(size)), ...value.split(",").map(size => size.trim()).filter(Boolean)])]})} />
+                      </div>
+                      <div className="grid gap-3 rounded-xl border border-[#e5dfd3] bg-[#fbfaf6] p-3 sm:col-span-2">
+                        <div className="flex items-center justify-between gap-3"><p className="text-xs font-semibold text-[#55574e]">রং ও ছবির গ্যালারি (ঐচ্ছিক)</p><button type="button" onClick={() => setEditingProduct({...editingProduct, colors: [...(editingProduct.colors ?? []), {name: "", images: []}]})} className="rounded-lg border border-[#1c3d34] px-3 py-2 text-xs font-semibold text-[#1c3d34]">+ Add colour</button></div>
+                        {(editingProduct.colors ?? []).map((color, index) => <div key={index} className="grid gap-2 rounded-lg border border-[#e5dfd3] bg-white p-3">
+                          <div className="flex items-center gap-2"><input value={color.name} onChange={e => setEditingProduct({...editingProduct, colors: (editingProduct.colors ?? []).map((item, i) => i === index ? {...item, name: e.target.value} : item)})} placeholder="Colour name (e.g. Forest Green)" className="h-10 min-w-0 flex-1 rounded-lg border border-[#ddd8cc] bg-[#fbfaf6] px-3 text-sm" /><button type="button" onClick={() => setEditingProduct({...editingProduct, colors: (editingProduct.colors ?? []).filter((_, i) => i !== index)})} className="text-xs text-red-700 underline">রং মুছো</button></div>
+                          <label className="grid gap-2 text-xs text-[#55574e]">একসঙ্গে একাধিক ছবি আপলোড (সর্বোচ্চ ১০০টি)<input type="file" multiple accept="image/jpeg,image/png,image/webp,image/gif" disabled={uploadingImage || color.images.length >= 100} onChange={e => { void handleColourFiles(index, e.target.files); e.currentTarget.value = ""; }} className="block w-full min-w-0 text-sm file:mr-3 file:rounded-lg file:border-0 file:bg-[#1c3d34] file:px-3 file:py-2 file:text-white" /></label>
+                          <p className="text-[11px] text-[#777268]">{color.images.length}/100 ছবি · প্রথম ছবিটি মূল ছবি হবে</p>
+                          {color.images.length ? <div className="flex gap-2 overflow-x-auto">{color.images.map((image, imageIndex) => <div key={image + imageIndex} className="relative size-16 shrink-0"><img src={image} alt="" className="size-full rounded object-cover" /><button type="button" aria-label="ছবি মুছো" onClick={() => setEditingProduct({...editingProduct, colors: (editingProduct.colors ?? []).map((item, i) => i === index ? {...item, images: item.images.filter((_, j) => j !== imageIndex)} : item)})} className="absolute -right-1 -top-1 grid size-5 place-items-center rounded-full bg-red-700 text-xs text-white">×</button></div>)}</div> : null}
+                        </div>)}
+                        {uploadProgress ? <p className="text-xs font-medium text-[#1c3d34]">{uploadProgress}</p> : null}
+                      </div>
+                      <div className="grid gap-2 rounded-xl border border-dashed border-[#cfc8b9] bg-[#fbfaf6] p-3"><label className="grid gap-2 text-xs font-medium text-[#55574e]">Product photo — ফোনের Gallery থেকে বেছে নাও<input type="file" accept="image/jpeg,image/png,image/webp,image/gif" onChange={e => void handleImageFile(e.target.files?.[0])} disabled={uploadingImage} className="block w-full min-w-0 text-sm file:mr-3 file:rounded-lg file:border-0 file:bg-[#1c3d34] file:px-3 file:py-2 file:font-semibold file:text-white disabled:opacity-60" /></label><p className="text-xs leading-5 text-[#777268]">{uploadingImage ? "ছবি ছোট করা ও আপলোড হচ্ছে…" : editingProduct.image ? "ছবি আপলোড হয়েছে। চাইলে নতুন ছবি বেছে বদলাতে পারো।" : "JPG, PNG, WEBP বা GIF। বড় ছবি স্বয়ংক্রিয়ভাবে ছোট করা হবে।"}</p>{editingProduct.image && <img src={editingProduct.image} alt={editingProduct.alt || editingProduct.name || "Product preview"} className="max-h-48 w-full rounded-lg bg-white object-contain" />}<input type="hidden" value={editingProduct.image} required={!editingProduct.colors?.some(color => color.images.length > 0)} readOnly aria-label="Uploaded image URL" /></div>
                       <AdminField label="Image alt text" value={editingProduct.alt} onChange={v => setEditingProduct({...editingProduct,alt:v})} required />
                       <AdminField label="Rating (0–5)" type="number" value={String(editingProduct.rating)} onChange={v => setEditingProduct({...editingProduct,rating:Number(v)})} />
                       <AdminField label="Review count" type="number" value={String(editingProduct.reviews)} onChange={v => setEditingProduct({...editingProduct,reviews:Number(v)})} />
@@ -429,7 +469,7 @@ function ManageStore() {
                       <label className="flex items-center gap-2"><input type="checkbox" checked={editingProduct.landed} onChange={e=>setEditingProduct({...editingProduct,landed:e.target.checked})} /> Ready in Dhaka</label>
                       <label className="flex items-center gap-2"><input type="checkbox" checked={Boolean(editingProduct.flash)} onChange={e=>setEditingProduct({...editingProduct,flash:e.target.checked})} /> Feature as flash deal</label>
                     </div>
-                    <div className="flex flex-wrap gap-2"><button disabled={savingProduct || uploadingImage || !editingProduct.image} className="h-11 rounded-xl bg-[#1c3d34] px-5 text-sm font-semibold text-white disabled:opacity-60">{uploadingImage ? "Uploading photo…" : savingProduct ? "Saving…" : "Save product"}</button><button type="button" onClick={() => setEditingProduct(null)} className="h-11 rounded-xl border border-[#ddd8cc] px-4 text-sm">Cancel</button></div>
+                    <div className="flex flex-wrap gap-2"><button disabled={savingProduct || uploadingImage || (!editingProduct.image && !editingProduct.colors?.some(color => color.images.length > 0))} className="h-11 rounded-xl bg-[#1c3d34] px-5 text-sm font-semibold text-white disabled:opacity-60">{uploadingImage ? (uploadProgress || "Uploading photo…") : savingProduct ? "Saving…" : "Save product"}</button><button type="button" onClick={() => setEditingProduct(null)} className="h-11 rounded-xl border border-[#ddd8cc] px-4 text-sm">Cancel</button></div>
                   </form>
                 )}
 
