@@ -38,6 +38,14 @@ function ProductPage() {
   const add = useCart((s) => s.add);
   const navigate = useNavigate();
   const [qty, setQty] = useState(1);
+  const [selectedSize, setSelectedSize] = useState("");
+  const [selectedColour, setSelectedColour] = useState("");
+  const [activeImage, setActiveImage] = useState("");
+  const gallery = product.colors?.length ? (product.colors.find((color) => color.name === selectedColour)?.images ?? []) : [];
+  const images = gallery.length ? gallery : product.image ? [product.image] : [];
+  const mainImage = activeImage && images.includes(activeImage) ? activeImage : images[0] || product.image;
+  const needsSize = Boolean(product.sizes?.length);
+  const needsColour = Boolean(product.colors?.length);
   const [saved, setSaved] = useState(wishlist.slugs.includes(product.slug));
   const [wishBusy, setWishBusy] = useState(false);
   const related = relatedTo(product.slug, products);
@@ -92,7 +100,7 @@ function ProductPage() {
               ? "Already at the Dhaka desk. Leaves in 1–3 days, tracked."
               : "Requested from the house. Allow 7–12 days, tracked the whole way."}
           </p>
-          <div className="mt-8 flex flex-wrap items-center gap-3">
+          {needsSize ? <fieldset className="mt-6"><legend className="text-xs tracking-widest text-mute uppercase">Size</legend><div className="mt-2 flex flex-wrap gap-2">{product.sizes!.map((size) => <button key={size} type="button" onClick={() => setSelectedSize(size)} className={`min-w-11 border px-3 py-2 text-sm ${selectedSize === size ? "border-pine bg-pine text-ivory" : "border-line"}`}>{size}</button>)}</div></fieldset> : null}\n          {needsColour ? <fieldset className="mt-5"><legend className="text-xs tracking-widest text-mute uppercase">Colour</legend><div className="mt-2 flex flex-wrap gap-2">{product.colors!.map((color) => <button key={color.name} type="button" onClick={() => { setSelectedColour(color.name); setActiveImage(color.images[0] || product.image); }} className={`border px-3 py-2 text-sm ${selectedColour === color.name ? "border-pine bg-pine text-ivory" : "border-line"}`}>{color.name}</button>)}</div></fieldset> : null}\n          <div className="mt-8 flex flex-wrap items-center gap-3">
             <Qty value={qty} onChange={(n) => setQty(Math.max(1, Math.min(8, n)))} />
             <button
               type="button"
