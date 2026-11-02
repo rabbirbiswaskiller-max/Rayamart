@@ -19,6 +19,7 @@ const card = "border border-line bg-ivory p-4";
 const field = "mt-1 w-full border border-line bg-white px-3 py-3 text-sm outline-none focus:border-pine";
 
 function PartnerDashboard() {
+  const [copied, setCopied] = useState(false);
   const data = Route.useLoaderData();
   const router = useRouter();
   const [amount, setAmount] = useState("");
@@ -92,6 +93,21 @@ function PartnerDashboard() {
       <section className="mt-6 border border-line bg-ivory p-5">
         <p className="text-sm text-ink-soft">তোমার লিংক:</p>
         <p className="mt-1 break-all font-mono text-sm">{link}</p>
+        <button
+          type="button"
+          onClick={async () => {
+            try {
+              await navigator.clipboard.writeText(link);
+              setCopied(true);
+              window.setTimeout(() => setCopied(false), 2000);
+            } catch {
+              /* clipboard blocked: the link can still be selected by hand */
+            }
+          }}
+          className="mt-3 h-10 bg-pine px-5 text-sm text-ivory"
+        >
+          {copied ? "কপি হয়েছে ✓" : "লিংক কপি করো"}
+        </button>
         <p className="mt-2 text-xs text-mute">এই লিংক দিয়ে যত মানুষ আসবে, সব হিসাব এখানে দেখাবে।</p>
       </section>
 
