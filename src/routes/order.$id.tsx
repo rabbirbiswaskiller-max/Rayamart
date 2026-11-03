@@ -95,7 +95,7 @@ function OrderPage() {
     <div className="mx-auto max-w-2xl px-4 py-14 sm:px-6">
       <p className="text-xs tracking-widest text-gold uppercase">Request received</p>
       <h1 className="mt-3 font-serif text-5xl leading-none sm:text-6xl">The desk has it.</h1>
-      <p className="mt-2 font-serif text-xl text-ink-soft">আপনার অর্ডার আমাদের কাছে পেৌঁছেছে।</p>
+      <p className="mt-2 font-serif text-xl text-ink-soft">আপনার অর্ডার আমাদের কাছে পৌঁছেছে।</p>
       <p className="mt-5 text-ink-soft">
         {order.customer.name}, we will call {order.customer.phone} to confirm before anything is charged. Keep this number.
       </p>
@@ -156,7 +156,7 @@ function OrderPage() {
                 <li className="flex gap-3">
                   <span className="font-serif text-lg text-pine">2</span>
                   <span>
-                    ঠিক {taka(amountDue)} পাঠান{isCOD ? " (এটি অগ্রিম ডেলিভারি ফি। পণ্যের দাম কুরিয়ারকে দেবেন)" : ""}।
+                    ঠিক {taka(amountDue)} পাঠান{isCOD ? " (এটি অগ্রিম ডেলিভারি ফি। পণ্যের দাম কুরিয়ারকে দেবেন)" : ""}।
                     <span className="block text-xs text-mute">
                       Send exactly {taka(amountDue)}.{isCOD ? " This is the advance delivery fee. The products are paid to the courier on delivery." : ""}
                     </span>
@@ -165,7 +165,7 @@ function OrderPage() {
                 <li className="flex gap-3">
                   <span className="font-serif text-lg text-pine">3</span>
                   <span>
-                    প্রাপ্ত TrxID নিচে বসিয়ে “Confirm payment” চাপুন।
+                    প্রাপ্ত TrxID নিচে বসিয়ে “Confirm payment” চাপুন।
                     <span className="block text-xs text-mute">Paste the TrxID you receive below and confirm.</span>
                   </span>
                 </li>
