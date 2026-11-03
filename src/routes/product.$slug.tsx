@@ -97,8 +97,18 @@ function ProductPage() {
               : "Requested from the house. Allow 7–12 days, tracked the whole way."}
           </p>
           {needsSize ? <fieldset className="mt-6"><legend className="text-xs tracking-widest text-mute uppercase">Size</legend><div className="mt-2 flex flex-wrap gap-2">{product.sizes!.map((size) => <button key={size} type="button" onClick={() => setSelectedSize(size)} className={`min-w-11 border px-3 py-2 text-sm ${selectedSize === size ? "border-pine bg-pine text-ivory" : "border-line"}`}>{size}</button>)}</div></fieldset> : null}
-          <div className="mt-8 flex items-center gap-3">
+          <div className="mt-8 flex items-center justify-between gap-3">
             <Qty value={qty} onChange={(n) => setQty(Math.max(1, Math.min(8, n)))} />
+            <button
+              type="button"
+              disabled={wishBusy}
+              aria-pressed={saved}
+              onClick={toggleSaved}
+              className="inline-flex h-11 items-center gap-2 border border-ink px-4 text-sm hover:bg-ink hover:text-ivory disabled:opacity-60"
+            >
+              <Heart className={`size-4 ${saved ? "fill-current" : ""}`} />
+              {saved ? "Saved" : "Save"}
+            </button>
           </div>
           <div className="mt-4 grid gap-3 sm:grid-cols-2">
             <button
@@ -125,18 +135,6 @@ function ProductPage() {
             </button>
           </div>
           {needsSize && !selectedSize ? <p className="mt-2 text-xs text-brick">Choose a size</p> : null}
-          <div className="mt-4">
-            <button
-              type="button"
-              disabled={wishBusy}
-              aria-pressed={saved}
-              onClick={toggleSaved}
-              className="inline-flex h-11 items-center gap-2 border border-ink px-4 text-sm hover:bg-ink hover:text-ivory disabled:opacity-60"
-            >
-              <Heart className={`size-4 ${saved ? "fill-current" : ""}`} />
-              {saved ? "Saved" : "Save"}
-            </button>
-          </div>
           <p className="mt-4 flex items-center gap-2 text-xs text-mute">
             <BadgeCheck className="size-4 text-pine" />
             Nothing is charged until the desk calls to confirm.
