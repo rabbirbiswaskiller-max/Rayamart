@@ -3,6 +3,7 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { payMethods, taka, onlineDiscountFor, SHIP_FEE, type PayMethod } from "@/lib/catalog";
 import { districts, upazilasOf } from "@/lib/geo";
 import { useCartDetailed } from "@/lib/store";
+import { useBuyNow } from "@/lib/buy-now";
 import { createCustomerOrder } from "@/lib/orders";
 import { readRef } from "@/lib/referral";
 import { listMyAddresses, type SavedAddress } from "@/lib/addresses";
@@ -10,6 +11,8 @@ import { listMyAddresses, type SavedAddress } from "@/lib/addresses";
 export const Route = createFileRoute("/checkout")({
   head: () => ({ meta: [{ title: "Checkout — Raya Mart" }] }),
   loader: () => listMyAddresses(),
+  // ?now=1 means "Order now": checkout only the piece kept aside, not the bag.
+  validateSearch: (search: Record<string, unknown>) => ({ now: search.now === "1" ? ("1" as const) : undefined }),
   component: CheckoutPage,
 });
 
@@ -34,8 +37,16 @@ const empty: Draft = {
 };
 
 function CheckoutPage() {
-  const { lines, subtotal } = useCartDetailed();
-  const navigate = useNavigate();
+  const { lines: cartLines, subtotal: cartSubtotal } = useCartDetailed();
+  const { now } = Route.useSearch();
+  const buyNow = useBuyNow((s) => s.line);
+  const directProduct = now === "1" ? buyNow?.product : undefined;
+  const directLine =
+    now === "1" && buyNow && directProduct
+      ? { slug: buyNow.slug, qty: buyNow.qty, product: directProduct, image: directProduct.image, ...(buyNow.size ? { size: buyNow.size } : {}) }
+      : null;
+  const lines = directLine ? [directLine] : cartLines;
+  const subtotal = directLine && directProduct ? directProduct.price * directLine.qty : cartSubtotal;
   const saved: SavedAddress[] = Route.useLoaderData();
   const defaultAddress = saved.find((a) => a.isDefault) ?? saved[0];
   const [draft, setDraft] = useState<Draft>(() =>
@@ -46,6 +57,7 @@ function CheckoutPage() {
   const [errors, setErrors] = useState<Partial<Record<keyof Draft, string>>>({});
   const [submitError, setSubmitError] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const navigate = useNavigate();
   const isCOD = draft.pay === "cod";
   const discountAmount = isCOD ? 0 : onlineDiscountFor(subtotal);
   const shippingAmount = isCOD ? SHIP_FEE : 0;
@@ -90,6 +102,7 @@ function CheckoutPage() {
         items: lines.map((line) => ({ slug: line.slug, qty: line.qty, ...(line.size ? { size: line.size } : {}) })),
         ref: readRef(),
       } });
+      if (directLine) useBuyNow.getState().set(null);
       navigate({ to: "/order/$id", params: { id: result.id } });
     } catch (err) {
       setSubmitError(err instanceof Error ? err.message : "Order could not be saved. Please try again.");
@@ -106,6 +119,20 @@ function CheckoutPage() {
         <p className="mt-3 max-w-lg text-sm text-ink-soft">
           We call this number to confirm the piece is in hand. You are not charged on this page.
         </p>
+
+        {directLine ? (
+          <div className="mt-6 border border-line bg-ivory p-4 text-sm">
+            <p>শুধু এই পণ্যটি অর্ডার হচ্ছে · Only this piece is being ordered.</p>
+            <Link
+              to="/checkout"
+              search={{}}
+              onClick={() => useBuyNow.getState().set(null)}
+              className="mt-2 inline-block text-pine underline"
+            >
+              কার্টের সব পণ্যসহ অর্ডার করুন · Order everything in my bag
+            </Link>
+          </div>
+        ) : null}
 
         {saved.length > 0 ? (
           <label className="mt-6 block text-xs tracking-widest text-mute uppercase">

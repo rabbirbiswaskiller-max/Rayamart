@@ -8,6 +8,7 @@ import {
   relatedTo,
 } from "@/lib/catalog";
 import { useCart } from "@/lib/store";
+import { useBuyNow } from "@/lib/buy-now";
 import { Price, Qty, Stars } from "@/components/commerce";
 import { ProductCard } from "@/components/product-card";
 import { listStoreProducts } from "@/lib/admin/products";
@@ -36,6 +37,7 @@ function ProductPage() {
   const house = houseBy(product.house);
   const category = categoryBy(product.category);
   const add = useCart((s) => s.add);
+  const setBuyNow = useBuyNow((s) => s.set);
   const navigate = useNavigate();
   const [qty, setQty] = useState(1);
   const [selectedSize, setSelectedSize] = useState("");
@@ -108,6 +110,17 @@ function ProductPage() {
             >
               Add to bag
             </button>
+            <button
+              type="button"
+              className="inline-flex h-12 flex-1 items-center justify-center border border-pine px-6 text-sm text-pine hover:bg-pine hover:text-ivory sm:flex-none"
+              onClick={() => {
+                if (needsSize && !selectedSize) { toast.error("Choose a size"); return; }
+                setBuyNow({ slug: product.slug, qty, product, ...(selectedSize ? { size: selectedSize } : {}) });
+                navigate({ to: "/checkout", search: { now: "1" } });
+              }}
+            >
+              Order now
+            </button>
             {needsSize && !selectedSize ? <p className="w-full text-xs text-brick">Choose a size</p> : null}
             <button
               type="button"
@@ -136,7 +149,7 @@ function ProductPage() {
             <details className="group py-4">
               <summary className="cursor-pointer">Shipping</summary>
               <p className="mt-3 text-ink-soft">
-                Complimentary over ৳3,500. Otherwise ৳120. Cash on delivery is offered when every piece in the bag is already in Dhaka.
+                Complimentary over ৳,500. Otherwise ৳120. Cash on delivery is offered when every piece in the bag is already in Dhaka.
               </p>
             </details>
             <details className="group py-4">
