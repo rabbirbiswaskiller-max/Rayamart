@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { cities, payMethods, taka, onlineDiscountFor, SHIP_FEE, type PayMethod } from "@/lib/catalog";
+import { payMethods, taka, onlineDiscountFor, SHIP_FEE, type PayMethod } from "@/lib/catalog";
+import { districts, upazilasOf } from "@/lib/geo";
 import { useCartDetailed } from "@/lib/store";
 import { createCustomerOrder } from "@/lib/orders";
 import { readRef } from "@/lib/referral";
@@ -15,7 +16,8 @@ export const Route = createFileRoute("/checkout")({
 type Draft = {
   name: string;
   phone: string;
-  city: string;
+  city: string; // district
+  upazila: string;
   address: string;
   pay: PayMethod;
   note: string;
@@ -25,6 +27,7 @@ const empty: Draft = {
   name: "",
   phone: "",
   city: "Dhaka",
+  upazila: "",
   address: "",
   pay: "bkash",
   note: "",
@@ -71,7 +74,8 @@ function CheckoutPage() {
     if (draft.name.trim().length < 2) next.name = "Please leave your name.";
     const phone = draft.phone.replace(/\s/g, "");
     if (!/^01\d{9}$/.test(phone)) next.phone = "Use an 11-digit mobile, starting with 01.";
-    if (!draft.city) next.city = "Choose a city.";
+    if (!draft.city) next.city = "Choose a district.";
+    if (!draft.upazila) next.upazila = "Choose an upazila.";
     if (draft.address.trim().length < 8) next.address = "Add a full address the courier can find.";
     if (draft.pay === "cod" && !allLanded) {
       next.pay = "Cash on delivery is only for pieces already in Dhaka.";
@@ -111,7 +115,7 @@ function CheckoutPage() {
               defaultValue={defaultAddress?.id}
               onChange={(e) => {
                 const a = saved.find((x) => x.id === e.target.value);
-                if (a) setDraft((d) => ({ ...d, name: a.name, phone: a.phone, city: a.city, address: a.address }));
+                if (a) setDraft((d) => ({ ...d, name: a.name, phone: a.phone, city: a.city, upazila: "", address: a.address }));
               }}
             >
               {saved.map((a) => (
@@ -130,10 +134,28 @@ function CheckoutPage() {
           <Field label="Mobile" error={errors.phone}>
             <input className={input} value={draft.phone} onChange={(e) => set("phone", e.target.value)} inputMode="tel" autoComplete="tel" placeholder="01XXXXXXXXX" />
           </Field>
-          <Field label="City" error={errors.city}>
-            <select className={input} value={draft.city} onChange={(e) => set("city", e.target.value)}>
-              {cities.map((city) => (
-                <option key={city}>{city}</option>
+          <Field label="District" error={errors.city} className="sm:col-span-2">
+            <select
+              className={input}
+              value={draft.city}
+              onChange={(e) => setDraft((d) => ({ ...d, city: e.target.value, upazila: "" }))}
+            >
+              {districts.map((district) => (
+                <option key={district}>{district}</option>
+              ))}
+            </select>
+          </Field>
+          <Field label="Upazila" error={errors.upazila} className="sm:col-span-2">
+            <select
+              className={input}
+              value={draft.upazila}
+              onChange={(e) => set("upazila", e.target.value)}
+            >
+              <option value="" disabled>
+                Select upazila
+              </option>
+              {upazilasOf(draft.city).map((upazila) => (
+                <option key={upazila}>{upazila}</option>
               ))}
             </select>
           </Field>
