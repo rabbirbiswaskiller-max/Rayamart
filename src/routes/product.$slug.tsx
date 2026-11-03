@@ -97,11 +97,13 @@ function ProductPage() {
               : "Requested from the house. Allow 7–12 days, tracked the whole way."}
           </p>
           {needsSize ? <fieldset className="mt-6"><legend className="text-xs tracking-widest text-mute uppercase">Size</legend><div className="mt-2 flex flex-wrap gap-2">{product.sizes!.map((size) => <button key={size} type="button" onClick={() => setSelectedSize(size)} className={`min-w-11 border px-3 py-2 text-sm ${selectedSize === size ? "border-pine bg-pine text-ivory" : "border-line"}`}>{size}</button>)}</div></fieldset> : null}
-          <div className="mt-8 flex flex-wrap items-center gap-3">
+          <div className="mt-8 flex items-center gap-3">
             <Qty value={qty} onChange={(n) => setQty(Math.max(1, Math.min(8, n)))} />
+          </div>
+          <div className="mt-4 grid gap-3 sm:grid-cols-2">
             <button
               type="button"
-              className="inline-flex h-12 flex-1 items-center justify-center bg-pine px-6 text-sm text-ivory hover:bg-pine-deep sm:flex-none"
+              className="inline-flex h-12 w-full items-center justify-center whitespace-nowrap bg-pine px-6 text-sm text-ivory hover:bg-pine-deep"
               onClick={() => {
                 if (needsSize && !selectedSize) { toast.error("Choose a size"); return; }
                 add(product, qty, selectedSize || undefined);
@@ -112,7 +114,7 @@ function ProductPage() {
             </button>
             <button
               type="button"
-              className="inline-flex h-12 flex-1 items-center justify-center border border-pine px-6 text-sm text-pine hover:bg-pine hover:text-ivory sm:flex-none"
+              className="inline-flex h-12 w-full items-center justify-center whitespace-nowrap border border-pine px-6 text-sm text-pine hover:bg-pine hover:text-ivory"
               onClick={() => {
                 if (needsSize && !selectedSize) { toast.error("Choose a size"); return; }
                 setBuyNow({ slug: product.slug, qty, product, ...(selectedSize ? { size: selectedSize } : {}) });
@@ -121,13 +123,15 @@ function ProductPage() {
             >
               Order now
             </button>
-            {needsSize && !selectedSize ? <p className="w-full text-xs text-brick">Choose a size</p> : null}
+          </div>
+          {needsSize && !selectedSize ? <p className="mt-2 text-xs text-brick">Choose a size</p> : null}
+          <div className="mt-4">
             <button
               type="button"
               disabled={wishBusy}
               aria-pressed={saved}
               onClick={toggleSaved}
-              className="inline-flex h-12 items-center gap-2 border border-ink px-4 text-sm hover:bg-ink hover:text-ivory disabled:opacity-60"
+              className="inline-flex h-11 items-center gap-2 border border-ink px-4 text-sm hover:bg-ink hover:text-ivory disabled:opacity-60"
             >
               <Heart className={`size-4 ${saved ? "fill-current" : ""}`} />
               {saved ? "Saved" : "Save"}
