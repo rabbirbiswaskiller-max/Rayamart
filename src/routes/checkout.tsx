@@ -173,7 +173,11 @@ function CheckoutPage() {
                       <span className="ml-auto text-[11px] tracking-widest text-pine uppercase">Recommended</span>
                     ) : null}
                   </span>
-                  {method.benefit ? <span className="mt-1 block pl-6 text-xs text-pine">{method.benefit}</span> : null}
+                  {method.benefit ? (
+                    <span className="mt-1 block pl-6 text-xs font-medium text-pine">
+                      Free delivery · You save {taka(SHIP_FEE)}
+                    </span>
+                  ) : null}
                   <span className="mt-1 block pl-6 text-xs text-mute">{method.line}</span>
                   {quiet ? (
                     <span className="mt-2 block pl-6 text-xs text-mute">
