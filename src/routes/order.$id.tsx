@@ -47,7 +47,6 @@ function OrderPage() {
   const [paid, setPaid] = useState(Boolean(order?.paid));
   const [message, setMessage] = useState("");
   const [busy, setBusy] = useState(false);
-  const pay = payMethods.find((m) => m.id === order?.customer.pay);
   const isCOD = order?.customer.pay === "cod";
   const needsTrx = order?.customer.pay === "bkash" || order?.customer.pay === "nagad" || isCOD;
   const amountDue = order ? (isCOD ? order.advanceDue : order.total) : 0;
@@ -137,7 +136,7 @@ function OrderPage() {
                   <p className="mt-1 font-serif text-3xl tabular-nums">{taka(amountDue)}</p>
                 </div>
                 <div>
-                  <p className="text-xs tracking-widest text-mute uppercase">{pay?.name} number · নম্বর</p>
+                  <p className="text-xs tracking-widest text-mute uppercase">bKash / Nagad number · নম্বর</p>
                   <div className="mt-1 flex items-center gap-3">
                     <p className="font-serif text-2xl tabular-nums">{PAY_NUMBER}</p>
                     <CopyButton value={PAY_NUMBER} label="Copy" />
@@ -149,8 +148,8 @@ function OrderPage() {
                 <li className="flex gap-3">
                   <span className="font-serif text-lg text-pine">1</span>
                   <span>
-                    {pay?.name} app থেকে “Send Money” বেছে নিন, আর উপরের নম্বরে পাঠান।
-                    <span className="block text-xs text-mute">Choose “Send Money” in the {pay?.name} app, and use the number above.</span>
+                    bKash বা Nagad app থেকে “Send Money” বেছে নিন, আর উপরের নম্বরে পাঠান।
+                    <span className="block text-xs text-mute">Choose “Send Money” in the bKash or Nagad app, and use the number above.</span>
                   </span>
                 </li>
                 <li className="flex gap-3">
@@ -208,7 +207,7 @@ function OrderPage() {
       <dl className="mt-5 space-y-2 text-sm">
         <div className="flex justify-between"><dt className="text-mute">Delivery</dt><dd>{order.shipping === 0 ? "Complimentary" : taka(order.shipping)}</dd></div>
         <div className="flex justify-between text-base"><dt>Total to confirm</dt><dd className="tabular-nums">{taka(order.total)}</dd></div>
-        <div className="flex justify-between"><dt className="text-mute">Payment</dt><dd>{pay?.name}</dd></div>
+        <div className="flex justify-between"><dt className="text-mute">Payment</dt><dd>{payMethods.find((m) => m.id === order.customer.pay)?.name}</dd></div>
       </dl>
       <p className="mt-6 text-sm text-ink-soft">{order.customer.address}</p>
       {order.customer.note ? <p className="mt-2 text-sm text-mute">Note: {order.customer.note}</p> : null}
