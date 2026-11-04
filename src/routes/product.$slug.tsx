@@ -11,6 +11,7 @@ import { useCart } from "@/lib/store";
 import { useBuyNow } from "@/lib/buy-now";
 import { Price, Qty, Stars } from "@/components/commerce";
 import { ProductCard } from "@/components/product-card";
+import { ProductGallery } from "@/components/product-gallery";
 import { listStoreProducts } from "@/lib/admin/products";
 import { getWishlistSlugs, toggleWishlist } from "@/lib/wishlist";
 
@@ -68,9 +69,7 @@ function ProductPage() {
   return (
     <div>
       <div className="mx-auto grid max-w-6xl gap-8 px-4 py-8 sm:px-6 lg:grid-cols-2 lg:gap-14 lg:py-12">
-        <div className="bg-paper-2">
-          <img src={product.image} alt={product.alt} className="aspect-square w-full object-cover" />
-        </div>
+        <ProductGallery images={product.images?.length ? product.images : [product.image]} alt={product.alt} />
         <div>
           <p className="text-xs tracking-widest text-mute uppercase">
             <Link to="/shop" search={{ house: product.house }} className="hover:text-ink">
