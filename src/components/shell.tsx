@@ -72,7 +72,7 @@ export function Shell({ children }: { children: ReactNode }) {
           </Link>
           <nav className="ml-6 hidden items-center gap-6 text-sm lg:flex">
             <Link to="/shop" search={emptySearch} className="hover:text-pine">
-              The edit
+              In the desk
             </Link>
             <Link to="/house" className="hover:text-pine">
               The house
@@ -149,7 +149,7 @@ export function Shell({ children }: { children: ReactNode }) {
               Home
             </MobileLink>
             <MobileLink to="/shop" search={emptySearch} onClick={() => setOpen(false)}>
-              The edit
+              In the desk
             </MobileLink>
             {categories.map((cat) => (
               <MobileLink
@@ -314,7 +314,7 @@ function Footer() {
           <ul className="mt-3 space-y-2 text-sm">
             <li>
               <Link to="/shop" search={{}}>
-                The edit
+                In the desk
               </Link>
             </li>
             <li>
