@@ -12,7 +12,7 @@ export const uploadStoreImage = createServerFn({ method: "POST" })
       throw new Error("শুধু JPG, PNG, WEBP বা GIF ছবি আপলোড করা যাবে।");
     }
     const token = process.env.BLOB_READ_WRITE_TOKEN;
-    if (!token) throw new Error("Image storage এখনো প্রস্তুত নয়। Vercel BLOB_READ_WRITE_TOKEN সেটিং পরীক্ষা করতে হবে।");
+    if (!token) throw new Error("Image storage এখনো প্রস্তুত নয়। Vercel BLOB_READ_WRITE_TOKEN সেটিং পরীক্ষা করতে হবে।");
     if (!data.base64 || data.base64.length > Math.ceil(IMAGE_MAX_BYTES * 1.4)) {
       throw new Error("ছবিটি অনেক বড়। ছোট ছবি বেছে আবার চেষ্টা করো।");
     }
@@ -30,9 +30,9 @@ export const uploadStoreImage = createServerFn({ method: "POST" })
       },
       body: bytes,
     });
-    if (!response.ok) throw new Error("ছবি আপলোড হয়নি। আবার চেষ্টা করো।");
+    if (!response.ok) throw new Error("ছবি আপলোড হয়নি। আবার চেষ্টা করো।");
     const result = await response.json() as { url?: string };
-    if (!result.url) throw new Error("আপলোড হয়েছে, কিন্তু ছবির লিংক পাওয়া যায়নি।");
+    if (!result.url) throw new Error("আপলোড হয়েছে, কিন্তু ছবির লিংক পাওয়া যায়নি।");
     return { url: result.url };
   });
 
@@ -59,6 +59,10 @@ function validateProduct(input: unknown): Product {
   if (!Number.isFinite(p.featured)) throw new Error("Display order must be a number.");
   if (!Array.isArray(p.notes) || p.notes.some((n) => typeof n !== "string")) throw new Error("Product notes must be a list.");
   const sizes = Array.isArray(p.sizes) ? [...new Set(p.sizes.map((s) => String(s).trim()).filter(Boolean))] : undefined;
+  // Gallery: optional list of photo URLs. The first photo is always the main image.
+  const images = Array.isArray(p.images)
+    ? [...new Set(p.images.map((u) => String(u).trim()).filter(Boolean))].slice(0, 10)
+    : [];
   return {
     slug: p.slug!.trim(), name: p.name!.trim(), house: p.house!.trim(),
     category: p.category!.trim(), origin: p.origin!.trim(), price: Number(p.price),
@@ -68,6 +72,7 @@ function validateProduct(input: unknown): Product {
     landed: Boolean(p.landed), featured: Number(p.featured ?? 0), size: p.size!.trim(),
     blurb: p.blurb!.trim(), story: p.story!.trim(),
     ...(sizes?.length ? { sizes } : {}),
+    ...(images.length ? { images } : {}),
     notes: p.notes.map((n) => String(n).trim()).filter(Boolean),
   };
 }
