@@ -50,7 +50,7 @@ function ShopPage() {
         ? cat.name
         : search.ready
           ? "Ready in Dhaka"
-          : "The edit";
+          : "In the desk";
 
   const line = house
     ? `${house.origin} — ${house.line}`
