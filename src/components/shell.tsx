@@ -220,7 +220,7 @@ function SearchForm({ className }: { className?: string }) {
   return (
     <form onSubmit={onSubmit} className={className} role="search">
       <label className="relative block">
-        <span className="sr-only">Search the edit</span>
+        <span className="sr-only">Search the desk</span>
         <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-mute" />
         <input
           value={q}
