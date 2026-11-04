@@ -138,6 +138,8 @@ export type Product = {
   rating: number;
   reviews: number;
   image: string;
+  // Optional gallery. When empty, the page shows `image` only.
+  images?: string[];
   alt: string;
   flash?: boolean;
   landed: boolean;
