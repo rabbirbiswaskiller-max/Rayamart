@@ -14,11 +14,17 @@ const adminOnly = import.meta.env.VITE_ADMIN_ONLY === "1";
 
 export function Shell({ children }: { children: ReactNode }) {
   const path = useRouterState({ select: (s) => s.location.pathname });
+  const search = useRouterState({ select: (s) => s.location.search }) as ShopQuery;
   const quiet = path.startsWith("/checkout") || path.startsWith("/order");
   const [open, setOpen] = useState(false);
   const count = useCartCount();
   const headerUser = useLoaderData({ from: "__root__" });
   const [mounted, setMounted] = useState(false);
+
+  // Which filter chip in the top strip is active (only on the shop page).
+  const onShop = path === "/shop";
+  const readyOn = onShop && search.ready === "1";
+  const allOn = onShop && !search.cat && !search.ready;
 
   useEffect(() => {
     setMounted(true);
@@ -102,14 +108,15 @@ export function Shell({ children }: { children: ReactNode }) {
         ) : null}
         {!quiet ? (
           <div className="no-scrollbar flex gap-2 overflow-x-auto border-t border-line px-4 py-2 sm:px-6">
-            <Chip to="/shop" search={emptySearch} label="All" />
-            <Chip to="/shop" search={{ ready: "1" }} label="Ready in Dhaka" />
+            <Chip to="/shop" search={emptySearch} label="All" active={allOn} />
+            <Chip to="/shop" search={{ ready: "1" }} label="Ready in Dhaka" active={readyOn} />
             {categories.map((cat) => (
               <Chip
                 key={cat.slug}
                 to="/shop"
                 search={{ cat: cat.slug }}
                 label={cat.name}
+                active={onShop && search.cat === cat.slug}
               />
             ))}
           </div>
@@ -230,16 +237,23 @@ function Chip({
   to,
   search,
   label,
+  active = false,
 }: {
   to: "/shop";
   search: ShopQuery;
   label: string;
+  active?: boolean;
 }) {
   return (
     <Link
       to={to}
       search={search}
-      className="inline-flex h-9 shrink-0 items-center border border-line bg-ivory px-3 text-xs tracking-wide text-ink-soft uppercase hover:border-ink hover:text-ink"
+      aria-current={active ? "page" : undefined}
+      className={`inline-flex h-9 shrink-0 items-center border px-3 text-xs tracking-wide uppercase ${
+        active
+          ? "border-ink bg-ink text-ivory"
+          : "border-line bg-ivory text-ink-soft hover:border-ink hover:text-ink"
+      }`}
     >
       {label}
     </Link>
