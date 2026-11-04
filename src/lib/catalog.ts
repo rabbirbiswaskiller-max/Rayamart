@@ -114,16 +114,16 @@ export const categories: Category[] = [
     image: "/media/arrival.jpg",
   },
   {
-    slug: "mens-fashion",
-    name: "Men’s Fashion",
-    line: "Everyday style, made easy",
-    image: "/media/IMG_91860096-f9a1-468a-a06e-b5123603db78.jpg",
-  },
-  {
     slug: "gifts",
     name: "Gifts",
     line: "Small things, sent with care",
     image: "/media/arrival.jpg",
+  },
+  {
+    slug: "mens-fashion",
+    name: "Men’s Fashion",
+    line: "Everyday style, made easy",
+    image: "/media/IMG_91860096-f9a1-468a-a06e-b5123603db78.jpg",
   },
 ];
 

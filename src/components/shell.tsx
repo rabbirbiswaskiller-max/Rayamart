@@ -44,7 +44,7 @@ export function Shell({ children }: { children: ReactNode }) {
     <div className="min-h-screen">
       {!quiet ? (
         <div className="bg-pine px-4 py-2 text-center text-xs tracking-wide text-ivory">
-          Sealed at origin · Confirmed by phone before you pay · Complimentary delivery over ৳,500
+          Sealed at origin · Confirmed by phone before you pay · Complimentary delivery over ৳3,500
         </div>
       ) : null}
       <header className="sticky top-0 z-40 border-b border-line bg-paper/95 backdrop-blur-md">
@@ -103,6 +103,7 @@ export function Shell({ children }: { children: ReactNode }) {
         {!quiet ? (
           <div className="no-scrollbar flex gap-2 overflow-x-auto border-t border-line px-4 py-2 sm:px-6">
             <Chip to="/shop" search={emptySearch} label="All" />
+            <Chip to="/shop" search={{ ready: "1" }} label="Ready in Dhaka" />
             {categories.map((cat) => (
               <Chip
                 key={cat.slug}
@@ -111,7 +112,6 @@ export function Shell({ children }: { children: ReactNode }) {
                 label={cat.name}
               />
             ))}
-            <Chip to="/shop" search={{ ready: "1" }} label="Ready in Dhaka" />
           </div>
         ) : null}
       </header>
