@@ -136,7 +136,7 @@ function Home() {
       <section className="mx-auto max-w-6xl px-4 py-16 sm:px-6">
         <div className="flex items-end justify-between gap-4">
           <div>
-            <p className="text-xs tracking-widest text-mute uppercase">The edit</p>
+            <p className="text-xs tracking-widest text-mute uppercase">In the desk</p>
             <h2 className="mt-2 font-serif text-4xl">What the desk is sending.</h2>
           </div>
         </div>
