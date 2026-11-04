@@ -33,7 +33,7 @@ function Home() {
               search={{}}
               className="inline-flex h-12 items-center bg-pine px-6 text-sm text-ivory hover:bg-pine-deep"
             >
-              Shop the edit
+              Shop the desk
             </Link>
             <Link
               to="/house"
@@ -82,7 +82,7 @@ function Home() {
             <h2 className="mt-2 font-serif text-4xl">Six rooms, not six thousand.</h2>
           </div>
           <Link to="/shop" search={{}} className="hidden text-sm underline underline-offset-4 sm:inline">
-            See the full edit
+            See the full desk
           </Link>
         </div>
         <div className="mt-8 grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-3">
