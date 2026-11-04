@@ -135,19 +135,34 @@ function ManageStore() {
     setRefreshing(false);
   }
 
-  async function handleImageFile(file?: File) {
+  // Main photo (replaces the current main image) or an extra gallery photo (appended).
+  async function handleImageFile(file?: File, extra = false) {
     if (!file) return;
     setError("");
     setUploadingImage(true);
     try {
       const prepared = await compressProductImage(file);
       const result = await uploadStoreImage({ data: prepared });
-      setEditingProduct((current) => current ? { ...current, image: result.url } : current);
+      setEditingProduct((current) => {
+        if (!current) return current;
+        const list = current.images?.length ? current.images : current.image ? [current.image] : [];
+        if (extra) return { ...current, images: [...list, result.url] };
+        return { ...current, image: result.url, images: [result.url, ...list.filter((u) => u !== current.image)] };
+      });
     } catch (err) {
       setError(err instanceof Error ? err.message : "ছবি আপলোড করা যায়নি। আবার চেষ্টা করো।");
     } finally {
       setUploadingImage(false);
     }
+  }
+
+  // Removing the main photo promotes the next gallery photo to main.
+  function removeGalleryImage(url: string) {
+    setEditingProduct((current) => {
+      if (!current) return current;
+      const rest = (current.images ?? []).filter((u) => u !== url);
+      return { ...current, images: rest, image: rest.includes(current.image) ? current.image : (rest[0] ?? "") };
+    });
   }
 
   const filteredProducts = useMemo(() => {
@@ -412,7 +427,7 @@ function ManageStore() {
                       <AdminField label="Slug (unique URL)" value={editingProduct.slug} onChange={v => setEditingProduct({...editingProduct,slug:slugify(v)})} required />
                       <AdminField label="Price (৳)" type="number" value={String(editingProduct.price || "")} onChange={v => setEditingProduct({...editingProduct,price:Number(v)})} required />
                       <AdminField label="Compare-at price (optional)" type="number" value={String(editingProduct.compareAt || "")} onChange={v => setEditingProduct({...editingProduct,compareAt:v ? Number(v) : undefined})} />
-                      <label className="grid gap-1.5 text-xs font-medium text-[#55574e]">Product category<select value={editingProduct.category} onChange={e => setEditingProduct({...editingProduct,category:e.target.value})} required className="h-10 min-w-0 rounded-lg border border-[#ddd8cc] bg-[#fbfaf6] px-3 text-sm text-[#182f28] outline-none focus:border-[#1c3d34]">{categories.map(category => <option key={category.slug} value={category.slug}>{category.name}</option>)}</select><span className="text-[11px] font-normal leading-5 text-[#777268]">এই প্রোডাক্টটি কোন ক্যাটাগরিতে দেখাবে, এখান থেকে বেছে নাও।</span></label>
+                      <label className="grid gap-1.5 text-xs font-medium text-[#55574e]">Product category<select value={editingProduct.category} onChange={e => setEditingProduct({...editingProduct,category:e.target.value})} required className="h-10 min-w-0 rounded-lg border border-[#ddd8cc] bg-[#fbfaf6] px-3 text-sm text-[#182f28] outline-none focus:border-[#1c3d34]">{categories.map(category => <option key={category.slug} value={category.slug}>{category.name}</option>)}</select><span className="text-[11px] font-normal leading-5 text-[#777268]">এই প্রোডাক্টটি কোন ক্যাটেগরিতে দেখাবে, এখান থেকে বেছে নাও।</span></label>
                       <AdminField label="Brand house slug (e.g. lumiere)" value={editingProduct.house} onChange={v => setEditingProduct({...editingProduct,house:slugify(v)})} required />
                       <AdminField label="Origin" value={editingProduct.origin} onChange={v => setEditingProduct({...editingProduct,origin:v})} required />
                       <AdminField label="Size / quantity" value={editingProduct.size} onChange={v => setEditingProduct({...editingProduct,size:v})} required />
@@ -421,7 +436,8 @@ function ManageStore() {
                         <div className="flex flex-wrap gap-4">{["XS", "S", "M", "L", "XL", "XXL"].map(size => <label key={size} className="flex items-center gap-2 text-sm"><input type="checkbox" checked={Boolean(editingProduct.sizes?.includes(size))} onChange={e => setEditingProduct({...editingProduct, sizes: e.target.checked ? [...new Set([...(editingProduct.sizes ?? []), size])] : (editingProduct.sizes ?? []).filter(value => value !== size)})} />{size}</label>)}</div>
                         <AdminField label="অন্যান্য সাইজ (কমা দিয়ে লিখো)" value={(editingProduct.sizes ?? []).filter(size => !["XS", "S", "M", "L", "XL", "XXL"].includes(size)).join(", ")} onChange={value => setEditingProduct({...editingProduct, sizes: [...new Set([...(editingProduct.sizes ?? []).filter(size => ["XS", "S", "M", "L", "XL", "XXL"].includes(size)), ...value.split(",").map(size => size.trim()).filter(Boolean)])]})} />
                       </div>
-                      <div className="grid gap-2 rounded-xl border border-dashed border-[#cfc8b9] bg-[#fbfaf6] p-3"><label className="grid gap-2 text-xs font-medium text-[#55574e]">Product photo — ফোনের Gallery থেকে বেছে নাও<input type="file" accept="image/jpeg,image/png,image/webp,image/gif" onChange={e => void handleImageFile(e.target.files?.[0])} disabled={uploadingImage} className="block w-full min-w-0 text-sm file:mr-3 file:rounded-lg file:border-0 file:bg-[#1c3d34] file:px-3 file:py-2 file:font-semibold file:text-white disabled:opacity-60" /></label><p className="text-xs leading-5 text-[#777268]">{uploadingImage ? "ছবি ছোট করা ও আপলোড হচ্ছে…" : editingProduct.image ? "ছবি আপলোড হয়েছে। চাইলে নতুন ছবি বেছে বদলাতে পারো।" : "JPG, PNG, WEBP বা GIF। বড় ছবি স্বয়ংক্রিয়ভাবে ছোট করা হবে।"}</p>{editingProduct.image && <img src={editingProduct.image} alt={editingProduct.alt || editingProduct.name || "Product preview"} className="max-h-48 w-full rounded-lg bg-white object-contain" />}<input type="hidden" value={editingProduct.image} required readOnly aria-label="Uploaded image URL" /></div>
+                      <div className="grid gap-2 rounded-xl border border-dashed border-[#cfc8b9] bg-[#fbfaf6] p-3"><label className="grid gap-2 text-xs font-medium text-[#55574e]">Product photo — ফোনের Gallery থেকে বেছে নাও<input type="file" accept="image/jpeg,image/png,image/webp,image/gif" onChange={e => void handleImageFile(e.target.files?.[0])} disabled={uploadingImage} className="block w-full min-w-0 text-sm file:mr-3 file:rounded-lg file:border-0 file:bg-[#1c3d34] file:px-3 file:py-2 file:font-semibold file:text-white disabled:opacity-60" /></label><p className="text-xs leading-5 text-[#777268]">{uploadingImage ? "ছবি ছোট করা ও আপলোড হচ্ছে…" : editingProduct.image ? "ছবি আপলোড হয়েছে। চাইলে নতুন ছবি বেছে বদলাতে পারো।" : "JPG, PNG, WEBP বা GIF। বড় ছবি স্বয়ংক্রিয়ভাবে ছোট করা হবে।"}</p>{editingProduct.image && <img src={editingProduct.image} alt={editingProduct.alt || editingProduct.name || "Product preview"} className="max-h-48 w-full rounded-lg bg-white object-contain" />}<input type="hidden" value={editingProduct.image} required readOnly aria-label="Uploaded image URL" /></div>
+                      <div className="grid gap-2 rounded-xl border border-dashed border-[#cfc8b9] bg-[#fbfaf6] p-3"><label className="grid gap-2 text-xs font-medium text-[#55574e]">Gallery — আরও ছবি যোগ করো (একাধিক, ঐচ্ছিক)<input type="file" accept="image/jpeg,image/png,image/webp,image/gif" onChange={e => { void handleImageFile(e.target.files?.[0], true); e.target.value = ""; }} disabled={uploadingImage || !editingProduct.image} className="block w-full min-w-0 text-sm file:mr-3 file:rounded-lg file:border-0 file:bg-[#1c3d34] file:px-3 file:py-2 file:font-semibold file:text-white disabled:opacity-60" /></label>{(editingProduct.images?.length ?? 0) > 0 && <div className="flex flex-wrap gap-2">{editingProduct.images!.map((url) => <div key={url} className="relative size-16 overflow-hidden rounded-lg border border-[#ddd8cc] bg-white"><img src={url} alt="" className="h-full w-full object-cover" /><button type="button" aria-label="Remove photo" onClick={() => removeGalleryImage(url)} className="absolute right-0.5 top-0.5 grid size-5 place-items-center rounded-full bg-white/90 text-[#182f28]"><X className="size-3" /></button></div>)}</div>}</div>
                       <AdminField label="Image alt text" value={editingProduct.alt} onChange={v => setEditingProduct({...editingProduct,alt:v})} required />
                       <AdminField label="Rating (0–5)" type="number" value={String(editingProduct.rating)} onChange={v => setEditingProduct({...editingProduct,rating:Number(v)})} />
                       <AdminField label="Review count" type="number" value={String(editingProduct.reviews)} onChange={v => setEditingProduct({...editingProduct,reviews:Number(v)})} />
@@ -614,7 +630,7 @@ function compressProductImage(file: File): Promise<{ fileName: string; contentTy
         reader.readAsDataURL(blob);
       }, "image/webp", 0.82);
     };
-    image.onerror = () => { URL.revokeObjectURL(objectUrl); reject(new Error("ছবিটি খোলা যায়নি। অন্য ছবি বেছে নাও।")); };
+    image.onerror = () => { URL.revokeObjectURL(objectUrl); reject(new Error("ছবিটি খোলা যায়নি। অন্য ছবি বেছে নাও।")); };
     image.src = objectUrl;
   });
 }
