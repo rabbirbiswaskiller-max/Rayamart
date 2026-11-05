@@ -2,7 +2,7 @@ import { useEffect, useState, type FormEvent, type ReactNode } from "react";
 import { Link, useLoaderData, useNavigate, useRouterState } from "@tanstack/react-router";
 import { Menu, Search, ShoppingBag, X } from "lucide-react";
 import { Toaster } from "sonner";
-import { categories, houses } from "@/lib/catalog";
+import { houses, visibleCategories } from "@/lib/catalog";
 import { HeaderAccount } from "@/components/header-account";
 import { useCartCount } from "@/lib/store";
 import type { ShopQuery } from "@/lib/catalog";
@@ -110,7 +110,7 @@ export function Shell({ children }: { children: ReactNode }) {
           <div className="no-scrollbar flex gap-2 overflow-x-auto border-t border-line px-4 py-2 sm:px-6">
             <Chip to="/shop" search={emptySearch} label="All" active={allOn} />
             <Chip to="/shop" search={{ ready: "1" }} label="Ready in Dhaka" active={readyOn} />
-            {categories.map((cat) => (
+            {visibleCategories.map((cat) => (
               <Chip
                 key={cat.slug}
                 to="/shop"
@@ -151,7 +151,7 @@ export function Shell({ children }: { children: ReactNode }) {
             <MobileLink to="/shop" search={emptySearch} onClick={() => setOpen(false)}>
               In the desk
             </MobileLink>
-            {categories.map((cat) => (
+            {visibleCategories.map((cat) => (
               <MobileLink
                 key={cat.slug}
                 to="/shop"
