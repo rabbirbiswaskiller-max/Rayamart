@@ -115,7 +115,7 @@ export const categories: Category[] = [
   },
   {
     slug: "gifts",
-    name: "Gifts",
+    name: "Gifts & Lifestyle",
     line: "Small things, sent with care",
     image: "https://7p8cxu69ibjhlfjv.public.blob.vercel-storage.com/products/1793767458117-raya-product-1793767456717-GT6DvjTrQa8pBHwYnNnwuwP9MG3bBe.webp",
   },
