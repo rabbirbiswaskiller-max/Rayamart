@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { BadgeCheck, RotateCcw, ShieldCheck, Truck } from "lucide-react";
-import { categories, houses } from "@/lib/catalog";
+import { houses, visibleCategories } from "@/lib/catalog";
 import { listStoreProducts } from "@/lib/admin/products";
 import { DealClock } from "@/components/commerce";
 import { ProductCard } from "@/components/product-card";
@@ -86,7 +86,7 @@ function Home() {
           </Link>
         </div>
         <div className="mt-8 grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-3">
-          {categories.map((cat) => (
+          {visibleCategories.map((cat) => (
             <Link
               key={cat.slug}
               to="/shop"

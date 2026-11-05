@@ -127,6 +127,11 @@ export const categories: Category[] = [
   },
 ];
 
+// Categories hidden from the storefront navigation and filters for now.
+// Remove a slug from this list to show that category again. Nothing is deleted from `categories`.
+export const hiddenCategorySlugs = ["skincare", "fragrance", "hair", "wellness", "home", "sets"];
+export const visibleCategories = categories.filter((c) => !hiddenCategorySlugs.includes(c.slug));
+
 export type Product = {
   slug: string;
   name: string;
