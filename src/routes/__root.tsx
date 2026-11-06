@@ -48,6 +48,8 @@ export const Route = createRootRoute({
       { rel: "manifest", href: "/__grok/manifest.webmanifest" },
       { rel: "apple-touch-icon", href: "/__grok/icon-180.png" },
     ],
+    // Vercel Web Analytics: the script Vercel serves at this path for enabled projects.
+    scripts: [{ src: "/_vercel/insights/script.js", defer: true }],
   }),
   // Session identity for the header (signed-in name/initials). Cheap and never throws.
   loader: () => getHeaderUser(),
