@@ -125,6 +125,12 @@ export const categories: Category[] = [
     line: "Everyday style, made easy",
     image: "/media/IMG_91860096-f9a1-468a-a06e-b5123603db78.jpg",
   },
+  {
+    slug: "winter-desk",
+    name: "Winter Desk",
+    line: "Warm pieces for the cold months",
+    image: "/media/arrival.jpg",
+  },
 ];
 
 // Categories hidden from the storefront navigation and filters for now.
