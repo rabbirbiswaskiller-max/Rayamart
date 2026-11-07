@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { createRootRoute, HeadContent, Outlet, redirect, Scripts } from "@tanstack/react-router";
 import { AuthProvider } from "@/lib/auth/provider";
 import { getHeaderUser } from "@/lib/auth/header-user";
@@ -48,16 +49,38 @@ export const Route = createRootRoute({
       { rel: "manifest", href: "/__grok/manifest.webmanifest" },
       { rel: "apple-touch-icon", href: "/__grok/icon-180.png" },
     ],
-    // Vercel Web Analytics: the script Vercel serves at this path for enabled projects.
-    scripts: [{ src: "/_vercel/insights/script.js", defer: true }],
   }),
   // Session identity for the header (signed-in name/initials). Cheap and never throws.
   loader: () => getHeaderUser(),
   component: RootDocument,
 });
 
+// Vercel Web Analytics loads in the browser, except on devices that opted out.
+// Opt out once with ?noanalytics=1 on any page; opt back in with ?noanalytics=0.
+const NO_ANALYTICS_KEY = "raya-no-analytics";
+const ANALYTICS_SRC = "/_vercel/insights/script.js";
+
+function useWebAnalytics() {
+  useEffect(() => {
+    try {
+      const flag = new URLSearchParams(window.location.search).get("noanalytics");
+      if (flag === "1") window.localStorage.setItem(NO_ANALYTICS_KEY, "1");
+      if (flag === "0") window.localStorage.removeItem(NO_ANALYTICS_KEY);
+      if (window.localStorage.getItem(NO_ANALYTICS_KEY) === "1") return;
+    } catch {
+      /* storage blocked: keep tracking */
+    }
+    if (document.querySelector(`script[src="${ANALYTICS_SRC}"]`)) return;
+    const script = document.createElement("script");
+    script.src = ANALYTICS_SRC;
+    script.defer = true;
+    document.head.appendChild(script);
+  }, []);
+}
+
 function RootDocument() {
   useRefCapture();
+  useWebAnalytics();
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
