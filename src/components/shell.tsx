@@ -1,8 +1,9 @@
 import { useEffect, useState, type FormEvent, type ReactNode } from "react";
 import { Link, useLoaderData, useNavigate, useRouterState } from "@tanstack/react-router";
-import { Menu, Search, ShoppingBag, X } from "lucide-react";
+import { Menu, MessageCircle, Search, ShoppingBag, X } from "lucide-react";
 import { Toaster } from "sonner";
 import { houses, visibleCategories } from "@/lib/catalog";
+import { whatsappOrderUrl } from "@/lib/whatsapp";
 import { HeaderAccount } from "@/components/header-account";
 import { useCartCount } from "@/lib/store";
 import type { ShopQuery } from "@/lib/catalog";
@@ -89,6 +90,16 @@ export function Shell({ children }: { children: ReactNode }) {
           </div>
           <div className="ml-auto flex items-center">
             <HeaderAccount />
+            <a
+              href={whatsappOrderUrl()}
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="Order on WhatsApp"
+              title="Order on WhatsApp"
+              className="hidden size-11 items-center justify-center text-pine hover:text-pine-deep sm:inline-flex"
+            >
+              <MessageCircle className="size-5" />
+            </a>
           </div>
           <Link
             to="/bag"
@@ -170,6 +181,15 @@ export function Shell({ children }: { children: ReactNode }) {
             <MobileLink to="/partner" onClick={() => setOpen(false)}>
               Become a partner
             </MobileLink>
+            <a
+              href={whatsappOrderUrl()}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={() => setOpen(false)}
+              className="border-b border-line py-3 font-serif text-3xl"
+            >
+              Order on WhatsApp
+            </a>
             <MobileLink to="/bag" onClick={() => setOpen(false)}>
               Bag
             </MobileLink>
