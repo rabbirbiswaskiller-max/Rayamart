@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { createFileRoute, Link, notFound, useNavigate } from "@tanstack/react-router";
 import { toast } from "sonner";
-import { BadgeCheck, Heart, Truck } from "lucide-react";
+import { BadgeCheck, Heart, MessageCircle, Truck } from "lucide-react";
 import {
   categoryBy,
   houseBy,
@@ -9,6 +9,7 @@ import {
 } from "@/lib/catalog";
 import { useCart } from "@/lib/store";
 import { useBuyNow } from "@/lib/buy-now";
+import { whatsappOrderUrl } from "@/lib/whatsapp";
 import { Price, Qty, Stars } from "@/components/commerce";
 import { ProductCard } from "@/components/product-card";
 import { ProductGallery } from "@/components/product-gallery";
@@ -134,6 +135,15 @@ function ProductPage() {
             </button>
           </div>
           {needsSize && !selectedSize ? <p className="mt-2 text-xs text-brick">Choose a size</p> : null}
+          <a
+            href={whatsappOrderUrl({ product: product.name, size: selectedSize, qty })}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="mt-3 inline-flex h-12 w-full items-center justify-center gap-2 border border-pine bg-ivory text-sm text-pine hover:bg-pine hover:text-ivory"
+          >
+            <MessageCircle className="size-4" />
+            Order on WhatsApp
+          </a>
           <p className="mt-4 flex items-center gap-2 text-xs text-mute">
             <BadgeCheck className="size-4 text-pine" />
             Nothing is charged until the desk calls to confirm.
