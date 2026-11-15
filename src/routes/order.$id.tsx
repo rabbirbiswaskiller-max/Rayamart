@@ -194,7 +194,7 @@ function OrderPage() {
 
       <ul className="mt-10 divide-y divide-line border-y border-line">
         {order.lines.map((line) => (
-          <li key={`${line.slug}|${line.size ?? ""}`} className="flex items-center gap-4 py-4">
+          <li key={`${line.slug}|${line.size ?? ""}|${line.color ?? ""}`} className="flex items-center gap-4 py-4">
             <img src={line.image} alt="" className="size-16 object-cover" />
             <div className="flex-1">
               <p className="font-serif text-2xl leading-tight">{line.name}</p>
