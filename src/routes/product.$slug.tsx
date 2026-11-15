@@ -10,6 +10,7 @@ import {
 import { useCart } from "@/lib/store";
 import { useBuyNow } from "@/lib/buy-now";
 import { whatsappOrderUrl } from "@/lib/whatsapp";
+import { track } from "@/lib/track";
 import { Price, Qty, Stars } from "@/components/commerce";
 import { ProductCard } from "@/components/product-card";
 import { ProductGallery } from "@/components/product-gallery";
@@ -117,6 +118,7 @@ function ProductPage() {
               onClick={() => {
                 if (needsSize && !selectedSize) { toast.error("Choose a size"); return; }
                 add(product, qty, selectedSize || undefined);
+                track("add_to_bag", { product: product.slug, qty, size: selectedSize || "none" });
                 toast(product.name, { description: `${qty} placed in your bag.` });
               }}
             >
@@ -127,6 +129,7 @@ function ProductPage() {
               className="inline-flex h-12 w-full items-center justify-center whitespace-nowrap border border-pine px-6 text-sm text-pine hover:bg-pine hover:text-ivory"
               onClick={() => {
                 if (needsSize && !selectedSize) { toast.error("Choose a size"); return; }
+                track("order_now_click", { product: product.slug, qty, size: selectedSize || "none" });
                 setBuyNow({ slug: product.slug, qty, product, ...(selectedSize ? { size: selectedSize } : {}) });
                 navigate({ to: "/checkout", search: { now: "1" } });
               }}
