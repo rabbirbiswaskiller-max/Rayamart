@@ -9,7 +9,7 @@ import {
   type PayMethod,
 } from "@/lib/catalog";
 
-export type CartLine = { slug: string; qty: number; product?: Product; size?: string; color?: string };
+export type CartLine = { slug: string; qty: number; product?: Product; image?: string; size?: string; color?: string };
 export function cartLineKey(line: Pick<CartLine, "slug" | "size" | "color">) { return `${line.slug}|${line.size ?? ""}|${line.color ?? ""}`; }
 
 export type OrderRecord = {
@@ -132,7 +132,7 @@ export function useCartDetailed() {
     .map((item) => {
       const product = item.product ?? getProduct(item.slug);
       if (!product) return null;
-      return { slug: item.slug, qty: item.qty, product, image: product.image, ...(item.size ? { size: item.size } : {}), ...(item.color ? { color: item.color } : {}) };
+      return { slug: item.slug, qty: item.qty, product, image: item.image ?? product.image, ...(item.size ? { size: item.size } : {}), ...(item.color ? { color: item.color } : {}) };
     })
     .filter((line): line is NonNullable<typeof line> =>
       line !== null,
