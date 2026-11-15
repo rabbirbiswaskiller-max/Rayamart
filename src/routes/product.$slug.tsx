@@ -75,7 +75,7 @@ function ProductPage() {
   return (
     <div>
       <div className="mx-auto grid max-w-6xl gap-8 px-4 py-8 sm:px-6 lg:grid-cols-2 lg:gap-14 lg:py-12">
-        <ProductGallery images={galleryImages} alt={product.alt} focusImage={selectedVariant?.image} />
+        <ProductGallery images={selectedVariant ? [selectedVariant.image, ...galleryImages.filter((image) => image !== selectedVariant.image)] : galleryImages} alt={product.alt} focusImage={selectedVariant?.image} />
         <div>
           <p className="text-xs tracking-widest text-mute uppercase">
             <Link to="/shop" search={{ house: product.house }} className="hover:text-ink">
