@@ -44,7 +44,7 @@ function CheckoutPage() {
   const directProduct = now === "1" ? buyNow?.product : undefined;
   const directLine =
     now === "1" && buyNow && directProduct
-      ? { slug: buyNow.slug, qty: buyNow.qty, product: directProduct, image: directProduct.image, ...(buyNow.size ? { size: buyNow.size } : {}) }
+      ? { slug: buyNow.slug, qty: buyNow.qty, product: directProduct, image: buyNow.image ?? directProduct.image, ...(buyNow.size ? { size: buyNow.size } : {}), ...(buyNow.color ? { color: buyNow.color } : {}) }
       : null;
   const lines = directLine ? [directLine] : cartLines;
   const subtotal = directLine && directProduct ? directProduct.price * directLine.qty : cartSubtotal;
@@ -109,7 +109,7 @@ function CheckoutPage() {
     try {
       const result = await createCustomerOrder({ data: {
         customer: { ...draft, phone, name: draft.name.trim(), address: draft.address.trim() },
-        items: lines.map((line) => ({ slug: line.slug, qty: line.qty, ...(line.size ? { size: line.size } : {}) })),
+        items: lines.map((line) => ({ slug: line.slug, qty: line.qty, ...(line.size ? { size: line.size } : {}), ...(line.color ? { color: line.color } : {}) })),
         ref: readRef(),
       } });
       track("order_placed", { pay: draft.pay, total: totalAmount });
@@ -278,7 +278,7 @@ function CheckoutPage() {
               <img src={line.image} alt="" className="size-16 object-cover" />
               <div className="min-w-0 flex-1">
                 <p className="font-serif text-xl leading-tight">{line.product.name}</p>
-                <p className="text-xs text-mute">{line.size ? `Size: ${line.size} · ` : ""}× {line.qty}</p>
+                <p className="text-xs text-mute">{line.size ? `Size: ${line.size} · ` : ""}{line.color ? `Color: ${line.color} · ` : ""}× {line.qty}</p>
               </div>
               <p className="text-sm tabular-nums">{taka(line.product.price * line.qty)}</p>
             </li>
