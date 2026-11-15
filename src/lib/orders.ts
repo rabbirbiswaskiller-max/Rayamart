@@ -11,7 +11,7 @@ type Customer = {
   note: string;
 };
 // cost = what we paid the house for this line, copied at order time.
-type OrderLine = { slug: string; name: string; qty: number; price: number; image: string; size?: string; cost?: number };
+type OrderLine = { slug: string; name: string; qty: number; price: number; image: string; size?: string; color?: string; cost?: number };
 export type StoredOrder = {
   id: string;
   createdAt: string;
@@ -55,7 +55,7 @@ export async function expireStaleOrders(): Promise<void> {
 }
 
 export const createCustomerOrder = createServerFn({ method: "POST" })
-  .inputValidator((data: { customer: Customer; items: { slug: string; qty: number; size?: string }[]; ref?: string }) => data)
+  .inputValidator((data: { customer: Customer; items: { slug: string; qty: number; size?: string; color?: string }[]; ref?: string }) => data)
   .handler(async ({ data }): Promise<{ id: string }> => {
     const customer = data.customer;
     if (!customer || customer.name.trim().length < 2) throw new Error("নাম সঠিকভাবে লিখো।");
@@ -77,13 +77,18 @@ export const createCustomerOrder = createServerFn({ method: "POST" })
       if (product.active === false) throw new Error("একটি প্রোডাক্ট এখন পাওয়া যাচ্ছে না। কার্ট থেকে সরিয়ে আবার চেষ্টা করো।");
       const hasSizes = Array.isArray(product.sizes) && product.sizes.length > 0;
       if (hasSizes ? (!item.size || !product.sizes!.includes(item.size)) : item.size !== undefined) throw new Error("প্রোডাক্টের সাইজ সঠিক নয়।");
+      const variants = product.colorVariants?.enabled ? (product.colorVariants.items ?? []).filter((v) => v.name && v.image) : [];
+      const variant = variants.length ? variants.find((v) => v.name === item.color) : undefined;
+      if (product.colorVariants?.enabled && (!variants.length || !variant)) throw new Error("প্রোডাক্টের রঙ সঠিক নয়। আবার রঙ বেছে নাও।");
+      if (!product.colorVariants?.enabled && item.color !== undefined) throw new Error("এই প্রোডাক্টে রঙের অপশন নেই। পেজ রিফ্রেশ করে আবার চেষ্টা করো।");
       lines.push({
         slug: product.slug,
         name: product.name,
         qty: item.qty,
         price: Number(product.price),
-        image: product.image,
+        image: variant?.image ?? product.image,
         ...(item.size ? { size: item.size } : {}),
+        ...(variant ? { color: variant.name } : {}),
         cost: typeof product.cost === "number" ? product.cost : undefined,
       });
     }
@@ -259,7 +264,7 @@ export const setOrderStatus = createServerFn({ method: "POST" })
   .handler(async ({ data }): Promise<{ ok: boolean }> => {
     await requireAdmin();
     if (!/^RM-[A-F0-9]{32}$/.test(data.id)) throw new Error("Order not found.");
-    if (!["open", "delivered", "cancelled"].includes(data.status)) throw new Error("Invalid status.");
+    if (["open", "delivered", "cancelled"].indexOf(data.status) < 0) throw new Error("Invalid status.");
     const sql = await getSql();
     const patch = {
       delivered: data.status === "delivered",

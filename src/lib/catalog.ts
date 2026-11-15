@@ -157,6 +157,8 @@ export type Product = {
   featured: number;
   size: string;
   sizes?: string[];
+  // Optional colour variants. Off unless `enabled` is true; each variant has its own name and photo.
+  colorVariants?: { enabled: boolean; items: { name: string; image: string }[] };
   blurb: string;
   story: string;
   notes: string[];

@@ -1,8 +1,15 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
-export function ProductGallery({ images, alt }: { images: string[]; alt: string }) {
+export function ProductGallery({ images, alt, focusImage }: { images: string[]; alt: string; focusImage?: string }) {
   const [index, setIndex] = useState(0);
   const startX = useRef<number | null>(null);
+  // Choosing a colour switches the main photo to that colour's photo.
+  useEffect(() => {
+    if (!focusImage) return;
+    const found = images.indexOf(focusImage);
+    if (found >= 0) setIndex(found);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [focusImage]);
   const count = images.length;
   if (count === 0) return null;
 
