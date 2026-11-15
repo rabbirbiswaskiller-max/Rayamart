@@ -198,7 +198,7 @@ function OrderPage() {
             <img src={line.image} alt="" className="size-16 object-cover" />
             <div className="flex-1">
               <p className="font-serif text-2xl leading-tight">{line.name}</p>
-              <p className="text-xs text-mute">{line.size ? `Size: ${line.size} · ` : ""}× {line.qty}</p>
+              <p className="text-xs text-mute">{line.size ? `Size: ${line.size} · ` : ""}{line.color ? `Color: ${line.color} · ` : ""}× {line.qty}</p>
             </div>
             <p className="text-sm tabular-nums">{taka(line.price * line.qty)}</p>
           </li>
