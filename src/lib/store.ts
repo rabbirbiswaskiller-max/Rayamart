@@ -9,13 +9,13 @@ import {
   type PayMethod,
 } from "@/lib/catalog";
 
-export type CartLine = { slug: string; qty: number; product?: Product; size?: string };
-export function cartLineKey(line: Pick<CartLine, "slug" | "size">) { return `${line.slug}|${line.size ?? ""}`; }
+export type CartLine = { slug: string; qty: number; product?: Product; size?: string; color?: string };
+export function cartLineKey(line: Pick<CartLine, "slug" | "size" | "color">) { return `${line.slug}|${line.size ?? ""}|${line.color ?? ""}`; }
 
 export type OrderRecord = {
   id: string;
   createdAt: string;
-  lines: { slug: string; name: string; qty: number; price: number; image: string; size?: string }[];
+  lines: { slug: string; name: string; qty: number; price: number; image: string; size?: string; color?: string }[];
   subtotal: number;
   discount?: number;
   shipping: number;
@@ -35,9 +35,9 @@ export type OrderRecord = {
 type CartState = {
   items: CartLine[];
   orders: OrderRecord[];
-  add: (product: Product | string, qty?: number, size?: string) => void;
-  setQty: (slug: string, qty: number, size?: string) => void;
-  remove: (slug: string, size?: string) => void;
+  add: (product: Product | string, qty?: number, size?: string, color?: string) => void;
+  setQty: (slug: string, qty: number, size?: string, color?: string) => void;
+  remove: (slug: string, size?: string, color?: string) => void;
   clear: () => void;
   placeOrder: (customer: OrderRecord["customer"]) => string | null;
 };
@@ -47,19 +47,19 @@ export const useCart = create<CartState>()(
     (set, get) => ({
       items: [],
       orders: [],
-      add: (productOrSlug, qty = 1, size) => {
+      add: (productOrSlug, qty = 1, size, color) => {
         const product = typeof productOrSlug === "string" ? getProduct(productOrSlug) : productOrSlug;
         if (!product) return;
         const slug = product.slug;
         set((state) => {
-          const key = cartLineKey({ slug, size });
+          const key = cartLineKey({ slug, size, color });
           const existing = state.items.find((i) => cartLineKey(i) === key);
-          if (!existing) return { items: [...state.items, { slug, qty, product, ...(size ? { size } : {}) }] };
+          if (!existing) return { items: [...state.items, { slug, qty, product, ...(size ? { size } : {}), ...(color ? { color } : {}) }] };
           return { items: state.items.map((i) => cartLineKey(i) === key ? { ...i, qty: Math.min(8, i.qty + qty) } : i) };
         });
       },
-      setQty: (slug, qty, size) => {
-        const key = cartLineKey({ slug, size });
+      setQty: (slug, qty, size, color) => {
+        const key = cartLineKey({ slug, size, color });
         if (qty <= 0) {
           set((state) => ({ items: state.items.filter((i) => cartLineKey(i) !== key) }));
           return;
@@ -70,8 +70,8 @@ export const useCart = create<CartState>()(
           ),
         }));
       },
-      remove: (slug, size) => {
-        const key = cartLineKey({ slug, size });
+      remove: (slug, size, color) => {
+        const key = cartLineKey({ slug, size, color });
         set((state) => ({ items: state.items.filter((i) => cartLineKey(i) !== key) }));
       },
       clear: () => set({ items: [] }),
@@ -87,6 +87,7 @@ export const useCart = create<CartState>()(
               price: product.price,
               image: product.image,
               ...(item.size ? { size: item.size } : {}),
+              ...(item.color ? { color: item.color } : {}),
             };
           })
           .filter((line): line is OrderRecord["lines"][number] => line !== null);
@@ -131,7 +132,7 @@ export function useCartDetailed() {
     .map((item) => {
       const product = item.product ?? getProduct(item.slug);
       if (!product) return null;
-      return { slug: item.slug, qty: item.qty, product, image: product.image, ...(item.size ? { size: item.size } : {}) };
+      return { slug: item.slug, qty: item.qty, product, image: product.image, ...(item.size ? { size: item.size } : {}), ...(item.color ? { color: item.color } : {}) };
     })
     .filter((line): line is NonNullable<typeof line> =>
       line !== null,
