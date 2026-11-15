@@ -79,7 +79,8 @@ export const createCustomerOrder = createServerFn({ method: "POST" })
       if (hasSizes ? (!item.size || !product.sizes!.includes(item.size)) : item.size !== undefined) throw new Error("প্রোডাক্টের সাইজ সঠিক নয়।");
       const variants = product.colorVariants?.enabled ? (product.colorVariants.items ?? []).filter((v) => v.name && v.image) : [];
       const variant = variants.length ? variants.find((v) => v.name === item.color) : undefined;
-      if (variants.length && !variant) throw new Error("প্রোডাক্টের রঙ সঠিক নয়। আবার রঙ বেছে নাও।");
+      if (product.colorVariants?.enabled && (!variants.length || !variant)) throw new Error("প্রোডাক্টের রঙ সঠিক নয়। আবার রঙ বেছে নাও।");
+      if (!product.colorVariants?.enabled && item.color !== undefined) throw new Error("এই প্রোডাক্টে রঙের অপশন নেই। পেজ রিফ্রেশ করে আবার চেষ্টা করো।");
       lines.push({
         slug: product.slug,
         name: product.name,
