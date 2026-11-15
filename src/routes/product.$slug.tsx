@@ -123,7 +123,7 @@ function ProductPage() {
               onClick={() => {
                 if (needsSize && !selectedSize) { toast.error("Choose a size"); return; }
                 if (colorVariants.length && !selectedColor) { toast.error("একটি রং বেছে নাও।"); return; }
-                add(product, qty, selectedSize || undefined, selectedColor || undefined);
+                add(selectedVariant ? { ...product, image: selectedVariant.image } : product, qty, selectedSize || undefined, selectedColor || undefined);
                 track("add_to_bag", { product: product.slug, qty, size: selectedSize || "none", color: selectedColor || "none" });
                 toast(product.name, { description: `${qty} placed in your bag.` });
               }}
