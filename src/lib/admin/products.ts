@@ -14,7 +14,7 @@ export const uploadStoreImage = createServerFn({ method: "POST" })
     const token = process.env.BLOB_READ_WRITE_TOKEN;
     if (!token) throw new Error("Image storage এখনো প্রস্তুত নয়। Vercel BLOB_READ_WRITE_TOKEN সেটিং পরীক্ষা করতে হবে।");
     if (!data.base64 || data.base64.length > Math.ceil(IMAGE_MAX_BYTES * 1.4)) {
-      throw new Error("ছবিটি অনেক বড়। ছোট ছবি বেছে আবার চেষ্টা করো।");
+      throw new Error("ছবিটি অনেক বড়। ছোট ছবি বেছে আবার চেষ্টা করো।");
     }
     const bytes = Buffer.from(data.base64, "base64");
     if (!bytes.length || bytes.length > IMAGE_MAX_BYTES) throw new Error("ছবির সাইজ ২ MB-এর মধ্যে রাখো।");
@@ -63,6 +63,15 @@ function validateProduct(input: unknown): Product {
   const images = Array.isArray(p.images)
     ? [...new Set(p.images.map((u) => String(u).trim()).filter(Boolean))].slice(0, 10)
     : [];
+  const variantItems = Array.isArray(p.colorVariants?.items)
+    ? p.colorVariants!.items
+        .map((v) => ({ name: String(v?.name ?? "").trim(), image: String(v?.image ?? "").trim() }))
+        .filter((v) => v.name && v.image)
+        .slice(0, 20)
+    : [];
+  const colorVariants = p.colorVariants?.enabled || variantItems.length
+    ? { enabled: Boolean(p.colorVariants?.enabled), items: variantItems }
+    : undefined;
   return {
     slug: p.slug!.trim(), name: p.name!.trim(), house: p.house!.trim(),
     category: p.category!.trim(), origin: p.origin!.trim(), price: Number(p.price),
@@ -73,6 +82,7 @@ function validateProduct(input: unknown): Product {
     blurb: p.blurb!.trim(), story: p.story!.trim(),
     ...(sizes?.length ? { sizes } : {}),
     ...(images.length ? { images } : {}),
+    ...(colorVariants ? { colorVariants } : {}),
     notes: p.notes.map((n) => String(n).trim()).filter(Boolean),
   };
 }
