@@ -69,6 +69,7 @@ function validateProduct(input: unknown): Product {
         .filter((v) => v.name && v.image)
         .slice(0, 20)
     : [];
+  if (p.colorVariants?.enabled && variantItems.length === 0) throw new Error("রঙের অপশন চালু করতে অন্তত একটি রঙের নাম ও ছবি যোগ করো।");
   const colorVariants = p.colorVariants?.enabled || variantItems.length
     ? { enabled: Boolean(p.colorVariants?.enabled), items: variantItems }
     : undefined;
