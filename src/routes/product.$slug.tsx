@@ -44,6 +44,10 @@ function ProductPage() {
   const navigate = useNavigate();
   const [qty, setQty] = useState(1);
   const [selectedSize, setSelectedSize] = useState("");
+  const colorVariants = product.colorVariants?.enabled ? (product.colorVariants.items ?? []).filter((variant) => variant.name && variant.image) : [];
+  const [selectedColor, setSelectedColor] = useState("");
+  const selectedVariant = colorVariants.find((variant) => variant.name === selectedColor);
+  const galleryImages = product.images?.length ? product.images : [product.image];
   const needsSize = Boolean(product.sizes?.length);
   const [saved, setSaved] = useState(wishlist.slugs.includes(product.slug));
   const [wishBusy, setWishBusy] = useState(false);
@@ -71,7 +75,7 @@ function ProductPage() {
   return (
     <div>
       <div className="mx-auto grid max-w-6xl gap-8 px-4 py-8 sm:px-6 lg:grid-cols-2 lg:gap-14 lg:py-12">
-        <ProductGallery images={product.images?.length ? product.images : [product.image]} alt={product.alt} />
+        <ProductGallery images={galleryImages} alt={product.alt} focusImage={selectedVariant?.image} />
         <div>
           <p className="text-xs tracking-widest text-mute uppercase">
             <Link to="/shop" search={{ house: product.house }} className="hover:text-ink">
@@ -97,6 +101,7 @@ function ProductPage() {
               ? "Already at the Dhaka desk. Leaves in 1–3 days, tracked."
               : "Requested from the house. Allow 7–12 days, tracked the whole way."}
           </p>
+          {colorVariants.length > 0 ? <fieldset className="mt-6"><legend className="text-xs tracking-widest text-mute uppercase">Color</legend><div className="mt-2 flex flex-wrap gap-2">{colorVariants.map((variant) => <button key={variant.name} type="button" onClick={() => setSelectedColor(variant.name)} aria-pressed={selectedColor === variant.name} aria-label={`Color: ${variant.name}`} className={`flex items-center gap-2 border px-3 py-2 text-sm transition ${selectedColor === variant.name ? "border-pine" : "border-line"}`}><img src={variant.image} alt="" className="size-8 object-cover" /><span>{variant.name}</span></button>)}</div></fieldset> : null}
           {needsSize ? <fieldset className="mt-6"><legend className="text-xs tracking-widest text-mute uppercase">Size</legend><div className="mt-2 flex flex-wrap gap-2">{product.sizes!.map((size) => <button key={size} type="button" onClick={() => setSelectedSize(size)} className={`min-w-11 border px-3 py-2 text-sm ${selectedSize === size ? "border-pine bg-pine text-ivory" : "border-line"}`}>{size}</button>)}</div></fieldset> : null}
           <div className="mt-8 flex items-center justify-between gap-3">
             <Qty value={qty} onChange={(n) => setQty(Math.max(1, Math.min(8, n)))} />
@@ -117,8 +122,9 @@ function ProductPage() {
               className="inline-flex h-12 w-full items-center justify-center whitespace-nowrap bg-pine px-6 text-sm text-ivory hover:bg-pine-deep"
               onClick={() => {
                 if (needsSize && !selectedSize) { toast.error("Choose a size"); return; }
-                add(product, qty, selectedSize || undefined);
-                track("add_to_bag", { product: product.slug, qty, size: selectedSize || "none" });
+                if (colorVariants.length && !selectedColor) { toast.error("একটি রং বেছে নাও।"); return; }
+                add(product, qty, selectedSize || undefined, selectedColor || undefined);
+                track("add_to_bag", { product: product.slug, qty, size: selectedSize || "none", color: selectedColor || "none" });
                 toast(product.name, { description: `${qty} placed in your bag.` });
               }}
             >
@@ -129,8 +135,9 @@ function ProductPage() {
               className="inline-flex h-12 w-full items-center justify-center whitespace-nowrap border border-pine px-6 text-sm text-pine hover:bg-pine hover:text-ivory"
               onClick={() => {
                 if (needsSize && !selectedSize) { toast.error("Choose a size"); return; }
-                track("order_now_click", { product: product.slug, qty, size: selectedSize || "none" });
-                setBuyNow({ slug: product.slug, qty, product, ...(selectedSize ? { size: selectedSize } : {}) });
+                if (colorVariants.length && !selectedColor) { toast.error("একটি রং বেছে নাও।"); return; }
+                track("order_now_click", { product: product.slug, qty, size: selectedSize || "none", color: selectedColor || "none" });
+                setBuyNow({ slug: product.slug, qty, product, image: selectedVariant?.image ?? product.image, ...(selectedSize ? { size: selectedSize } : {}), ...(selectedColor ? { color: selectedColor } : {}) });
                 navigate({ to: "/checkout", search: { now: "1" } });
               }}
             >
@@ -138,8 +145,9 @@ function ProductPage() {
             </button>
           </div>
           {needsSize && !selectedSize ? <p className="mt-2 text-xs text-brick">Choose a size</p> : null}
+          {colorVariants.length > 0 && !selectedColor ? <p className="mt-2 text-xs text-brick">একটি রং বেছে নাও</p> : null}
           <a
-            href={whatsappOrderUrl({ product: product.name, size: selectedSize, qty })}
+            href={whatsappOrderUrl({ product: product.name, size: selectedSize, color: selectedColor, qty })}
             target="_blank"
             rel="noopener noreferrer"
             className="mt-3 inline-flex h-12 w-full items-center justify-center gap-2 border border-pine bg-ivory text-sm text-pine hover:bg-pine hover:text-ivory"
