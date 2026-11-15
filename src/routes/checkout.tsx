@@ -274,7 +274,7 @@ function CheckoutPage() {
         <h2 className="font-serif text-3xl">In this request</h2>
         <ul className="mt-4 divide-y divide-line">
           {lines.map((line) => (
-            <li key={`${line.slug}|${line.size ?? ""}`} className="flex gap-3 py-3">
+            <li key={`${line.slug}|${line.size ?? ""}|${line.color ?? ""}`} className="flex gap-3 py-3">
               <img src={line.image} alt="" className="size-16 object-cover" />
               <div className="min-w-0 flex-1">
                 <p className="font-serif text-xl leading-tight">{line.product.name}</p>
