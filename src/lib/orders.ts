@@ -62,24 +62,24 @@ export const createCustomerOrder = createServerFn({ method: "POST" })
     const phone = customer.phone.replace(/\s/g, "");
     if (!/^01\d{9}$/.test(phone)) throw new Error("১১ সংখ্যার বাংলাদেশি মোবাইল নম্বর দাও।");
     if (!customer.city?.trim() || customer.address.trim().length < 8) throw new Error("শহর ও পূর্ণ ঠিকানা দাও।");
-    if (!validPays.has(customer.pay)) throw new Error("পেমেন্ট পদ্ধতি সঠিক নয়।");
+    if (!validPays.has(customer.pay)) throw new Error("পেমেন্ট পদ্ধতি সঠিক নয়।");
     if (!Array.isArray(data.items) || data.items.length < 1 || data.items.length > 50) throw new Error("কার্টে প্রোডাক্ট নেই।");
 
     const sql = await getSql();
     const lines: OrderLine[] = [];
     for (const item of data.items) {
       if (!item || !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(item.slug) || !Number.isInteger(item.qty) || item.qty < 1 || item.qty > 8) {
-        throw new Error("কার্টের প্রোডাক্টের তথ্য সঠিক নয়।");
+        throw new Error("কার্টের প্রোডাক্টের তথ্য সঠিক নয়।");
       }
       const rows = await sql.query<{ data: Product }>("SELECT data FROM raya_products WHERE slug = $1 LIMIT 1", [item.slug]);
       const product = rows[0]?.data;
-      if (!product) throw new Error("একটি প্রোডাক্ট আর পাওয়া যাচ্ছে না। পেজ রিফ্রেশ করে আবার চেষ্টা করো।");
-      if (product.active === false) throw new Error("একটি প্রোডাক্ট এখন পাওয়া যাচ্ছে না। কার্ট থেকে সরিয়ে আবার চেষ্টা করো।");
+      if (!product) throw new Error("একটি প্রোডাক্ট আর পাওয়া যাচ্ছে না। পেজ রিফ্রেশ করে আবার চেষ্টা করো।");
+      if (product.active === false) throw new Error("একটি প্রোডাক্ট এখন পাওয়া যাচ্ছে না। কার্ট থেকে সরিয়ে আবার চেষ্টা করো।");
       const hasSizes = Array.isArray(product.sizes) && product.sizes.length > 0;
-      if (hasSizes ? (!item.size || !product.sizes!.includes(item.size)) : item.size !== undefined) throw new Error("প্রোডাক্টের সাইজ সঠিক নয়।");
+      if (hasSizes ? (!item.size || !product.sizes!.includes(item.size)) : item.size !== undefined) throw new Error("প্রোডাক্টের সাইজ সঠিক নয়।");
       const variants = product.colorVariants?.enabled ? (product.colorVariants.items ?? []).filter((v) => v.name && v.image) : [];
       const variant = variants.length ? variants.find((v) => v.name === item.color) : undefined;
-      if (variants.length && !variant) throw new Error("প্রোডাক্টের রং সঠিক নয়। আবার রং বেছে নাও।");
+      if (variants.length && !variant) throw new Error("প্রোডাক্টের রঙ সঠিক নয়। আবার রঙ বেছে নাও।");
       lines.push({
         slug: product.slug,
         name: product.name,
@@ -96,7 +96,7 @@ export const createCustomerOrder = createServerFn({ method: "POST" })
         const rows = await sql.query<{ data: Product }>("SELECT data FROM raya_products WHERE slug = $1 LIMIT 1", [line.slug]);
         return rows[0]?.data;
       }));
-      if (products.some((p) => !p?.landed)) throw new Error("Cash on delivery শুধু Dhaka-তে ready থাকা প্রোডাক্টে পাওয়া যাবে।");
+      if (products.some((p) => !p?.landed)) throw new Error("Cash on delivery শুধু Dhaka-তে ready থাকা প্রোডাক্টে পাওয়া যাবে।");
     }
     const subtotal = lines.reduce((sum, line) => sum + line.price * line.qty, 0);
     const isCOD = customer.pay === "cod";
@@ -143,7 +143,7 @@ export const submitPaymentTrx = createServerFn({ method: "POST" })
     if (!order) return { ok: false, message: "Order not found." };
     if (order.paid) return { ok: true, message: "Payment already confirmed." };
     if (order.cancelled) {
-      return { ok: false, message: "এই অর্ডারের ২৪ ঘণ্টার সময়সীমা শেষ হয়েছে। নতুন করে অর্ডার করো, অথবা আমাদের সাথে যোগাযোগ করো।" };
+      return { ok: false, message: "এই অর্ডারের ২৪ ঘণ্টার সময়সীমা শেষ হয়েছে। নতুন করে অর্ডার করো, অথবা আমাদের সাথে যোগাযোগ করো।" };
     }
     const method = order.customer.pay;
     if (method !== "bkash" && method !== "nagad" && method !== "cod") {
@@ -263,7 +263,7 @@ export const setOrderStatus = createServerFn({ method: "POST" })
   .handler(async ({ data }): Promise<{ ok: boolean }> => {
     await requireAdmin();
     if (!/^RM-[A-F0-9]{32}$/.test(data.id)) throw new Error("Order not found.");
-    if (!["open", "delivered", "cancelled"].includes(data.status)) throw new Error("Invalid status.");
+    if (["open", "delivered", "cancelled"].indexOf(data.status) < 0) throw new Error("Invalid status.");
     const sql = await getSql();
     const patch = {
       delivered: data.status === "delivered",
