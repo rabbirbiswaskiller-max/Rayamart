@@ -2,6 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { FREE_OVER, taka } from "@/lib/catalog";
 import { Qty, Price } from "@/components/commerce";
 import { cartLineKey, useCart, useCartDetailed } from "@/lib/store";
+import { track } from "@/lib/track";
 
 export const Route = createFileRoute("/bag")({
   head: () => ({ meta: [{ title: "Your bag — Raya Mart" }] }),
@@ -86,6 +87,7 @@ function BagPage() {
         </p>
         <Link
           to="/checkout"
+          onClick={() => track("bag_continue_checkout")}
           className="mt-6 inline-flex h-12 w-full items-center justify-center bg-pine text-sm text-ivory hover:bg-pine-deep"
         >
           Continue to the desk
