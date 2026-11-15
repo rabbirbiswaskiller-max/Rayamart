@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { payMethods, taka, onlineDiscountFor, SHIP_FEE, type PayMethod } from "@/lib/catalog";
 import { districts, upazilasOf } from "@/lib/geo";
@@ -7,6 +7,7 @@ import { useBuyNow } from "@/lib/buy-now";
 import { createCustomerOrder } from "@/lib/orders";
 import { readRef } from "@/lib/referral";
 import { listMyAddresses, type SavedAddress } from "@/lib/addresses";
+import { track } from "@/lib/track";
 
 export const Route = createFileRoute("/checkout")({
   head: () => ({ meta: [{ title: "Checkout — Raya Mart" }] }),
@@ -76,6 +77,11 @@ function CheckoutPage() {
 
   const allLanded = lines.every((line) => line.product.landed);
 
+  useEffect(() => {
+    track("checkout_view", { mode: directLine ? "order_now" : "bag", lines: lines.length });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   function set<K extends keyof Draft>(key: K, value: Draft[K]) {
     setDraft((d) => ({ ...d, [key]: value }));
   }
@@ -93,18 +99,24 @@ function CheckoutPage() {
       next.pay = "Cash on delivery is only for pieces already in Dhaka.";
     }
     setErrors(next);
-    if (Object.keys(next).length > 0) return;
+    if (Object.keys(next).length > 0) {
+      track("checkout_validation_error", { fields: Object.keys(next).join(",") });
+      return;
+    }
     setSubmitError("");
     setSubmitting(true);
+    track("order_submit", { pay: draft.pay, lines: lines.length, total: totalAmount });
     try {
       const result = await createCustomerOrder({ data: {
         customer: { ...draft, phone, name: draft.name.trim(), address: draft.address.trim() },
         items: lines.map((line) => ({ slug: line.slug, qty: line.qty, ...(line.size ? { size: line.size } : {}) })),
         ref: readRef(),
       } });
+      track("order_placed", { pay: draft.pay, total: totalAmount });
       if (directLine) useBuyNow.getState().set(null);
       navigate({ to: "/order/$id", params: { id: result.id } });
     } catch (err) {
+      track("order_failed", { pay: draft.pay });
       setSubmitError(err instanceof Error ? err.message : "Order could not be saved. Please try again.");
     } finally {
       setSubmitting(false);
