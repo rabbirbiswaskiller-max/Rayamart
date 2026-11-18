@@ -30,6 +30,7 @@ import {
   houses,
   taka,
   type Product,
+  winterSubcategories,
 } from "@/lib/catalog";
 import { listAdminOrders, type StoredOrder } from "@/lib/orders";
 import { signOut } from "@/lib/auth/client";
@@ -80,7 +81,7 @@ function ManageStore() {
         setManagedOrders(currentOrders);
       }
     } catch {
-      setError("লগইন যাচাই করা যায়নি। ইন্টারনেট সংযোগ দেখে আবার চেষ্টা করো।");
+      setError("লগইন যাচাই করা যায়নি। ইন্টারনেট সংযোগ দেখে আবার চেষ্টা করো।");
     }
   }
 
@@ -99,7 +100,7 @@ function ManageStore() {
         password: adminPassword,
       });
       if (result.error) {
-        throw new Error(result.error.message || "ইমেইল বা পাসওয়ার্ড সঠিক নয়।");
+        throw new Error(result.error.message || "ইমেইল বা পাসওয়ার্ড সঠিক নয়।");
       }
       setAdminPassword("");
       await checkAccess();
@@ -107,7 +108,7 @@ function ManageStore() {
       setError(
         err instanceof Error
           ? err.message
-          : "Admin Login করা যায়নি। ইমেইল ও পাসওয়ার্ড পরীক্ষা করো।",
+          : "Admin Login করা যায়নি। ইমেইল ও পাসওয়ার্ড পরীক্ষা করো।",
       );
     } finally {
       setBusy(false);
@@ -122,7 +123,7 @@ function ManageStore() {
       setError("");
       await checkAccess();
     } catch {
-      setError("লগআউট সম্পন্ন হয়নি। আবার চেষ্টা করো।");
+      setError("লগআউট সম্পন্ন হয়নি। আবার চেষ্টা করো।");
     } finally {
       setBusy(false);
     }
@@ -150,7 +151,7 @@ function ManageStore() {
         return { ...current, image: result.url, images: [result.url, ...list.filter((u) => u !== current.image)] };
       });
     } catch (err) {
-      setError(err instanceof Error ? err.message : "ছবি আপলোড করা যায়নি। আবার চেষ্টা করো।");
+      setError(err instanceof Error ? err.message : "ছবি আপলোড করা যায়নি। আবার চেষ্টা করো।");
     } finally {
       setUploadingImage(false);
     }
@@ -217,17 +218,17 @@ function ManageStore() {
           <div className="p-6 sm:p-10 lg:p-12">
             <p className="text-xs font-semibold uppercase tracking-[.2em] text-[#7c5e3a]">Administrator</p>
             <h2 className="mt-3 font-serif text-3xl sm:text-4xl">Welcome back.</h2>
-            <p className="mt-3 text-sm leading-6 text-[#625e54]">তোমার অ্যাডমিন লগইন তথ্য দিয়ে প্রবেশ করো।</p>
+            <p className="mt-3 text-sm leading-6 text-[#625e54]">তোমার অ্যাডমিন লগইন তথ্য দিয়ে প্রবেশ করো।</p>
 
             {access?.emailConfigured === false && (
               <div role="alert" className="mt-5 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-800">
-                Admin email সার্ভারে সেট করা নেই। নিরাপত্তার জন্য প্রবেশ বন্ধ রাখা হয়েছে।
+                Admin email সার্ভারে সেট করা নেই। নিরাপত্তার জন্য প্রবেশ বন্ধ রাখা হয়েছে।
               </div>
             )}
 
             {access?.signedIn && !access.allowed && (
               <div role="alert" className="mt-5 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
-                এই অ্যাকাউন্টে Admin অনুমতি নেই। অনুমোদিত অ্যাকাউন্ট দিয়ে লগইন করো।
+                এই অ্যাকাউন্টে Admin অনুমতি নেই। অনুমোদিত অ্যাকাউন্ট দিয়ে লগইন করো।
               </div>
             )}
 
@@ -421,23 +422,23 @@ function ManageStore() {
                     finally { setSavingProduct(false); }
                   }}>
                     <div className="flex items-center justify-between gap-3"><h3 className="font-serif text-xl">{managedProducts.some(p => p.slug === editingProduct.slug) ? "Edit product" : "Add a new product"}</h3><button type="button" onClick={() => setEditingProduct(null)} aria-label="Close product form"><X className="size-5" /></button></div>
-                    <p className="text-xs leading-5 text-[#777268]">ফোনের Gallery থেকে ছবি বেছে নাও। ছবিটি স্বয়ংক্রিয়ভাবে আপলোড হবে এবং প্রোডাক্টের সঙ্গে সেভ হবে।</p>
+                    <p className="text-xs leading-5 text-[#777268]">ফোনের Gallery থেকে ছবি বেছে নাও। ছবিটি স্বয়ংক্রিয়ভাবে আপলোড হবে এবং প্রোডাক্টের সঙ্গে সেভ হবে।</p>
                     <div className="grid gap-3 sm:grid-cols-2">
                       <AdminField label="Product name" value={editingProduct.name} onChange={v => setEditingProduct({...editingProduct,name:v,slug: (!editingProduct.slug || editingProduct.slug === slugify(editingProduct.name)) ? slugify(v) : editingProduct.slug})} required />
                       <AdminField label="Slug (unique URL)" value={editingProduct.slug} onChange={v => setEditingProduct({...editingProduct,slug:slugify(v)})} required />
                       <AdminField label="Price (৳)" type="number" value={String(editingProduct.price || "")} onChange={v => setEditingProduct({...editingProduct,price:Number(v)})} required />
                       <AdminField label="Compare-at price (optional)" type="number" value={String(editingProduct.compareAt || "")} onChange={v => setEditingProduct({...editingProduct,compareAt:v ? Number(v) : undefined})} />
-                      <label className="grid gap-1.5 text-xs font-medium text-[#55574e]">Product category<select value={editingProduct.category} onChange={e => setEditingProduct({...editingProduct,category:e.target.value})} required className="h-10 min-w-0 rounded-lg border border-[#ddd8cc] bg-[#fbfaf6] px-3 text-sm text-[#182f28] outline-none focus:border-[#1c3d34]">{categories.map(category => <option key={category.slug} value={category.slug}>{category.name}</option>)}</select><span className="text-[11px] font-normal leading-5 text-[#777268]">এই প্রোডাক্টটি কোন ক্যাটেগরিতে দেখাবে, এখান থেকে বেছে নাও।</span></label>
+                      <label className="grid gap-1.5 text-xs font-medium text-[#55574e]">Product category<select value={editingProduct.category} onChange={e => setEditingProduct({...editingProduct,category:e.target.value})} required className="h-10 min-w-0 rounded-lg border border-[#ddd8cc] bg-[#fbfaf6] px-3 text-sm text-[#182f28] outline-none focus:border-[#1c3d34]">{categories.map(category => <option key={category.slug} value={category.slug}>{category.name}</option>)}</select><span className="text-[11px] font-normal leading-5 text-[#777268]">এই প্রোডাক্টটি কোন ক্যাটেগরিতে দেখাবে, এখান থেকে বেছে নাও।</span></label>{editingProduct.category === "winter-desk" ? <label className="grid gap-1.5 text-xs font-medium text-[#55574e]">Winter Desk sub-group<select value={editingProduct.subcategory ?? ""} onChange={e => setEditingProduct({...editingProduct, subcategory: e.target.value || undefined})} className="h-10 min-w-0 rounded-lg border border-[#ddd8cc] bg-[#fbfaf6] px-3 text-sm text-[#182f28] outline-none focus:border-[#1c3d34]"><option value="">None (general Winter Desk)</option>{winterSubcategories.map(sub => <option key={sub.slug} value={sub.slug}>{sub.name}</option>)}</select><span className="text-[11px] font-normal leading-5 text-[#777268]">Soft Desk বা Solid Desk বেছে নাও, অথবা None রাখো।</span></label> : null}
                       <AdminField label="Brand house slug (e.g. lumiere)" value={editingProduct.house} onChange={v => setEditingProduct({...editingProduct,house:slugify(v)})} required />
                       <AdminField label="Origin" value={editingProduct.origin} onChange={v => setEditingProduct({...editingProduct,origin:v})} required />
                       <AdminField label="Size / quantity" value={editingProduct.size} onChange={v => setEditingProduct({...editingProduct,size:v})} required />
                       <div className="grid gap-3 rounded-xl border border-[#e5dfd3] bg-[#fbfaf6] p-3 sm:col-span-2">
                         <p className="text-xs font-semibold text-[#55574e]">Available clothing sizes (optional)</p>
                         <div className="flex flex-wrap gap-4">{["XS", "S", "M", "L", "XL", "XXL"].map(size => <label key={size} className="flex items-center gap-2 text-sm"><input type="checkbox" checked={Boolean(editingProduct.sizes?.includes(size))} onChange={e => setEditingProduct({...editingProduct, sizes: e.target.checked ? [...new Set([...(editingProduct.sizes ?? []), size])] : (editingProduct.sizes ?? []).filter(value => value !== size)})} />{size}</label>)}</div>
-                        <AdminField label="অন্যান্য সাইজ (কমা দিয়ে লিখো)" value={(editingProduct.sizes ?? []).filter(size => !["XS", "S", "M", "L", "XL", "XXL"].includes(size)).join(", ")} onChange={value => setEditingProduct({...editingProduct, sizes: [...new Set([...(editingProduct.sizes ?? []).filter(size => ["XS", "S", "M", "L", "XL", "XXL"].includes(size)), ...value.split(",").map(size => size.trim()).filter(Boolean)])]})} />
+                        <AdminField label="অন্যান্য সাইজ (কমা দিয়ে লিখো)" value={(editingProduct.sizes ?? []).filter(size => !["XS", "S", "M", "L", "XL", "XXL"].includes(size)).join(", ")} onChange={value => setEditingProduct({...editingProduct, sizes: [...new Set([...(editingProduct.sizes ?? []).filter(size => ["XS", "S", "M", "L", "XL", "XXL"].includes(size)), ...value.split(",").map(size => size.trim()).filter(Boolean)])]})} />
                       </div>
                       <div className="grid gap-3 rounded-xl border border-[#e5dfd3] bg-[#fbfaf6] p-3 sm:col-span-2"><label className="flex items-center gap-2 text-sm font-semibold text-[#55574e]"><input type="checkbox" checked={Boolean(editingProduct.colorVariants?.enabled)} onChange={e => setEditingProduct({...editingProduct, colorVariants: { enabled: e.target.checked, items: editingProduct.colorVariants?.items ?? [] }})} /> Enable color variants</label>{editingProduct.colorVariants?.enabled ? <div className="grid gap-3">{(editingProduct.colorVariants.items ?? []).map((variant, index) => <div key={index} className="grid gap-2 rounded-lg border border-[#ddd8cc] bg-white p-3 sm:grid-cols-[1fr_1fr_auto]"><AdminField label="Color name" value={variant.name} onChange={value => setEditingProduct({...editingProduct, colorVariants: {...editingProduct.colorVariants!, items: editingProduct.colorVariants!.items.map((item, i) => i === index ? {...item, name:value} : item)}})} /><AdminField label="Color image URL" value={variant.image} onChange={value => setEditingProduct({...editingProduct, colorVariants: {...editingProduct.colorVariants!, items: editingProduct.colorVariants!.items.map((item, i) => i === index ? {...item, image:value} : item)}})} /><button type="button" onClick={() => setEditingProduct({...editingProduct, colorVariants: {...editingProduct.colorVariants!, items: editingProduct.colorVariants!.items.filter((_, i) => i !== index)}})} className="h-10 self-end rounded-lg border border-red-200 px-3 text-sm text-red-700">Remove</button>{variant.image ? <img src={variant.image} alt={variant.name} className="size-16 rounded-lg object-cover sm:col-span-3" /> : null}</div>)}<button type="button" onClick={() => setEditingProduct({...editingProduct, colorVariants: {enabled:true, items:[...(editingProduct.colorVariants?.items ?? []), {name:"", image:""}]}})} className="h-10 w-fit rounded-lg border border-[#ddd8cc] px-3 text-sm">+ Add color</button><p className="text-xs leading-5 text-[#777268]">প্রতিটি রঙের নাম ও ছবির URL যোগ করো। ছবিটি সেই রঙ নির্বাচন করলে মূল ছবিতে দেখাবে।</p></div> : null}</div>
-                      <div className="grid gap-2 rounded-xl border border-dashed border-[#cfc8b9] bg-[#fbfaf6] p-3"><label className="grid gap-2 text-xs font-medium text-[#55574e]">Product photo — ফোনের Gallery থেকে বেছে নাও<input type="file" accept="image/jpeg,image/png,image/webp,image/gif" onChange={e => void handleImageFile(e.target.files?.[0])} disabled={uploadingImage} className="block w-full min-w-0 text-sm file:mr-3 file:rounded-lg file:border-0 file:bg-[#1c3d34] file:px-3 file:py-2 file:font-semibold file:text-white disabled:opacity-60" /></label><p className="text-xs leading-5 text-[#777268]">{uploadingImage ? "ছবি ছোট করা ও আপলোড হচ্ছে…" : editingProduct.image ? "ছবি আপলোড হয়েছে। চাইলে নতুন ছবি বেছে বদলাতে পারো।" : "JPG, PNG, WEBP বা GIF। বড় ছবি স্বয়ংক্রিয়ভাবে ছোট করা হবে।"}</p>{editingProduct.image && <img src={editingProduct.image} alt={editingProduct.alt || editingProduct.name || "Product preview"} className="max-h-48 w-full rounded-lg bg-white object-contain" />}<input type="hidden" value={editingProduct.image} required readOnly aria-label="Uploaded image URL" /></div>
+                      <div className="grid gap-2 rounded-xl border border-dashed border-[#cfc8b9] bg-[#fbfaf6] p-3"><label className="grid gap-2 text-xs font-medium text-[#55574e]">Product photo — ফোনের Gallery থেকে বেছে নাও<input type="file" accept="image/jpeg,image/png,image/webp,image/gif" onChange={e => void handleImageFile(e.target.files?.[0])} disabled={uploadingImage} className="block w-full min-w-0 text-sm file:mr-3 file:rounded-lg file:border-0 file:bg-[#1c3d34] file:px-3 file:py-2 file:font-semibold file:text-white disabled:opacity-60" /></label><p className="text-xs leading-5 text-[#777268]">{uploadingImage ? "ছবি ছোট করা ও আপলোড হচ্ছে…" : editingProduct.image ? "ছবি আপলোড হয়েছে। চাইলে নতুন ছবি বেছে বদলাতে পারো।" : "JPG, PNG, WEBP বা GIF। বড় ছবি স্বয়ংক্রিয়ভাবে ছোট করা হবে।"}</p>{editingProduct.image && <img src={editingProduct.image} alt={editingProduct.alt || editingProduct.name || "Product preview"} className="max-h-48 w-full rounded-lg bg-white object-contain" />}<input type="hidden" value={editingProduct.image} required readOnly aria-label="Uploaded image URL" /></div>
                       <div className="grid gap-2 rounded-xl border border-dashed border-[#cfc8b9] bg-[#fbfaf6] p-3"><label className="grid gap-2 text-xs font-medium text-[#55574e]">Gallery — আরও ছবি যোগ করো (একাধিক, ঐচ্ছিক)<input type="file" accept="image/jpeg,image/png,image/webp,image/gif" onChange={e => { void handleImageFile(e.target.files?.[0], true); e.target.value = ""; }} disabled={uploadingImage || !editingProduct.image} className="block w-full min-w-0 text-sm file:mr-3 file:rounded-lg file:border-0 file:bg-[#1c3d34] file:px-3 file:py-2 file:font-semibold file:text-white disabled:opacity-60" /></label>{(editingProduct.images?.length ?? 0) > 0 && <div className="flex flex-wrap gap-2">{editingProduct.images!.map((url) => <div key={url} className="relative size-16 overflow-hidden rounded-lg border border-[#ddd8cc] bg-white"><img src={url} alt="" className="h-full w-full object-cover" /><button type="button" aria-label="Remove photo" onClick={() => removeGalleryImage(url)} className="absolute right-0.5 top-0.5 grid size-5 place-items-center rounded-full bg-white/90 text-[#182f28]"><X className="size-3" /></button></div>)}</div>}</div>
                       <AdminField label="Image alt text" value={editingProduct.alt} onChange={v => setEditingProduct({...editingProduct,alt:v})} required />
                       <AdminField label="Rating (0–5)" type="number" value={String(editingProduct.rating)} onChange={v => setEditingProduct({...editingProduct,rating:Number(v)})} />
@@ -466,7 +467,7 @@ function ManageStore() {
                       </div>
                     </div>
                   ))}
-                  {filteredProducts.length === 0 && <div className="rounded-xl border border-dashed border-[#d8d1c4] px-4 py-12 text-center sm:col-span-2 xl:col-span-3"><Package className="mx-auto size-8 text-[#8a8478]" /><h3 className="mt-3 font-serif text-xl">No products yet</h3><p className="mt-2 text-sm text-[#777268]">“Add product” চাপ দিয়ে প্রথম প্রোডাক্ট যোগ করো।</p></div>}
+                  {filteredProducts.length === 0 && <div className="rounded-xl border border-dashed border-[#d8d1c4] px-4 py-12 text-center sm:col-span-2 xl:col-span-3"><Package className="mx-auto size-8 text-[#8a8478]" /><h3 className="mt-3 font-serif text-xl">No products yet</h3><p className="mt-2 text-sm text-[#777268]">“Add product” চাপ দিয়ে প্রথম প্রোডাক্ট যোগ করো।</p></div>}
                 </div>
               </div>
             )}
@@ -489,7 +490,7 @@ function ManageStore() {
                   <div className="mt-5 rounded-xl border border-dashed border-[#d8d1c4] px-4 py-12 text-center">
                     <ClipboardList className="mx-auto size-8 text-[#8a8478]" />
                     <h3 className="mt-3 font-serif text-xl">No customer orders yet</h3>
-                    <p className="mt-2 text-sm leading-6 text-[#777268]">এখনো কোনো অনলাইন অর্ডার পাওয়া যায়নি, অথবা সার্চে মেলেনি।</p>
+                    <p className="mt-2 text-sm leading-6 text-[#777268]">এখনো কোনো অনলাইন অর্ডার পাওয়া যায়নি, অথবা সার্চে মেলেনি।</p>
                   </div>
                 ) : (
                   <div className="mt-5 space-y-3">
@@ -614,20 +615,20 @@ function compressProductImage(file: File): Promise<{ fileName: string; contentTy
       canvas.width = Math.max(1, Math.round(image.naturalWidth * scale));
       canvas.height = Math.max(1, Math.round(image.naturalHeight * scale));
       const context = canvas.getContext("2d");
-      if (!context) { reject(new Error("ছবি প্রস্তুত করা যায়নি।")); return; }
+      if (!context) { reject(new Error("ছবি প্রস্তুত করা যায়নি।")); return; }
       context.drawImage(image, 0, 0, canvas.width, canvas.height);
       canvas.toBlob((blob) => {
-        if (!blob) { reject(new Error("ছবি ছোট করা যায়নি।")); return; }
+        if (!blob) { reject(new Error("ছবি ছোট করা যায়নি।")); return; }
         if (blob.size > 2_000_000) { reject(new Error("ছবিটি এখনও ২ MB-এর বেশি। ছোট ছবি বেছে নাও।")); return; }
         const reader = new FileReader();
         reader.onload = () => {
           const value = String(reader.result ?? "");
           const base64 = value.split(",")[1];
-          if (!base64) { reject(new Error("ছবির ডেটা পড়া যায়নি।")); return; }
+          if (!base64) { reject(new Error("ছবির ডেটা পড়া যায়নি।")); return; }
           const extension = blob.type === "image/png" ? "png" : blob.type === "image/jpeg" ? "jpg" : "webp";
           resolve({ fileName: `raya-product-${Date.now()}.${extension}`, contentType: blob.type || "image/webp", base64 });
         };
-        reader.onerror = () => reject(new Error("ছবির ডেটা পড়া যায়নি।"));
+        reader.onerror = () => reject(new Error("ছবির ডেটা পড়া যায়নি।"));
         reader.readAsDataURL(blob);
       }, "image/webp", 0.82);
     };
