@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import {
   categories,
@@ -5,8 +6,10 @@ import {
   filterProducts,
   houseBy,
   houses,
+  winterSubcategories,
   type ShopQuery,
 } from "@/lib/catalog";
+import { SoftDeskIcon, SolidDeskIcon } from "@/components/desk-icons";
 import { ProductCard } from "@/components/product-card";
 import { listStoreProducts } from "@/lib/admin/products";
 
@@ -17,6 +20,9 @@ export const Route = createFileRoute("/shop")({
     if (typeof search.q === "string" && search.q.trim()) out.q = search.q.trim();
     if (typeof search.cat === "string" && categories.some((c) => c.slug === search.cat)) {
       out.cat = search.cat;
+    }
+    if (typeof search.sub === "string" && winterSubcategories.some((s) => s.slug === search.sub)) {
+      out.sub = search.sub;
     }
     if (typeof search.house === "string" && houses.some((h) => h.slug === search.house)) {
       out.house = search.house;
@@ -113,6 +119,20 @@ function ShopPage() {
         ))}
       </div>
 
+      {search.cat === "winter-desk" ? (
+        <div className="mt-3 flex flex-wrap gap-2">
+          {winterSubcategories.map((sub) => (
+            <Filter
+              key={sub.slug}
+              active={search.sub === sub.slug}
+              search={{ ...search, sub: search.sub === sub.slug ? undefined : sub.slug }}
+              label={sub.name}
+              icon={sub.slug === "soft-desk" ? <SoftDeskIcon className="size-3.5" /> : <SolidDeskIcon className="size-3.5" />}
+            />
+          ))}
+        </div>
+      ) : null}
+
       <p className="mt-6 text-sm text-mute">
         {list.length} {list.length === 1 ? "piece" : "pieces"}
       </p>
@@ -140,22 +160,27 @@ function Filter({
   label,
   search,
   active,
+  icon,
 }: {
   label: string;
   search: ShopQuery;
   active: boolean;
+  icon?: ReactNode;
 }) {
   const navigate = Route.useNavigate();
+  const layout = icon ? "inline-flex items-center gap-1.5 " : "";
   return (
     <button
       type="button"
       onClick={() => navigate({ to: "/shop", search: clean(search) })}
       className={
-        active
+        layout +
+        (active
           ? "h-9 border border-ink bg-ink px-3 text-xs tracking-wide text-ivory uppercase"
-          : "h-9 border border-line bg-ivory px-3 text-xs tracking-wide text-ink-soft uppercase hover:border-ink"
+          : "h-9 border border-line bg-ivory px-3 text-xs tracking-wide text-ink-soft uppercase hover:border-ink")
       }
     >
+      {icon}
       {label}
     </button>
   );
@@ -168,5 +193,6 @@ function clean(search: ShopQuery): ShopQuery {
   if (search.house) next.house = search.house;
   if (search.sort) next.sort = search.sort;
   if (search.ready) next.ready = search.ready;
+  if (search.sub) next.sub = search.sub;
   return next;
 }
