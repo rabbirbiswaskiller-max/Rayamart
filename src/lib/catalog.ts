@@ -138,11 +138,19 @@ export const categories: Category[] = [
 export const hiddenCategorySlugs = ["skincare", "fragrance", "hair", "wellness", "home", "sets"];
 export const visibleCategories = categories.filter((c) => !hiddenCategorySlugs.includes(c.slug));
 
+// Two sub-groups inside Winter Desk. A product belongs to one of them, or to none.
+export const winterSubcategories = [
+  { slug: "soft-desk", name: "Soft Desk", line: "Gentle layers for women" },
+  { slug: "solid-desk", name: "Solid Desk", line: "Structured layers for men" },
+];
+
 export type Product = {
   slug: string;
   name: string;
   house: string;
   category: string;
+  // Only used inside Winter Desk: "soft-desk" or "solid-desk". Empty means general Winter Desk.
+  subcategory?: string;
   origin: string;
   price: number;
   compareAt?: number;
@@ -281,6 +289,7 @@ export function getProduct(slug: string) {
 export type ShopQuery = {
   q?: string;
   cat?: string;
+  sub?: string;
   house?: string;
   sort?: "price-asc" | "price-desc" | "rating";
   ready?: "1";
@@ -290,6 +299,7 @@ export function filterProducts(query: ShopQuery, sourceProducts: Product[] = pro
   let list = sourceProducts.slice();
   if (query.cat) list = list.filter((p) => p.category === query.cat);
   if (query.house) list = list.filter((p) => p.house === query.house);
+  if (query.sub) list = list.filter((p) => p.subcategory === query.sub);
   if (query.ready === "1") list = list.filter((p) => p.landed);
   if (query.q) {
     const s = query.q.trim().toLowerCase();

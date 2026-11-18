@@ -1,6 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { getSql } from "@/lib/db";
-import type { Product } from "@/lib/catalog";
+import { winterSubcategories, type Product } from "@/lib/catalog";
 
 const IMAGE_MAX_BYTES = 2_000_000;
 
@@ -73,6 +73,8 @@ function validateProduct(input: unknown): Product {
   const colorVariants = p.colorVariants?.enabled || variantItems.length
     ? { enabled: Boolean(p.colorVariants?.enabled), items: variantItems }
     : undefined;
+  // Subcategory only applies inside Winter Desk, and must be one of the known sub-groups.
+  const subcategory = p.category?.trim() === "winter-desk" && winterSubcategories.some((s) => s.slug === p.subcategory) ? p.subcategory : undefined;
   return {
     slug: p.slug!.trim(), name: p.name!.trim(), house: p.house!.trim(),
     category: p.category!.trim(), origin: p.origin!.trim(), price: Number(p.price),
@@ -84,6 +86,7 @@ function validateProduct(input: unknown): Product {
     ...(sizes?.length ? { sizes } : {}),
     ...(images.length ? { images } : {}),
     ...(colorVariants ? { colorVariants } : {}),
+    ...(subcategory ? { subcategory } : {}),
     notes: p.notes.map((n) => String(n).trim()).filter(Boolean),
   };
 }
